@@ -1,0 +1,46 @@
+# Local AI/tool state
+.omo/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ML outputs
+runs/
+outputs/
+checkpoints/
+weights/
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Datasets and videos
+datasets/
+data/
+videos/
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
