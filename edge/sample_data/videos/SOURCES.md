@@ -9,6 +9,15 @@ people as a bundled sample.
 | `bus_interior_01.mp4` | `tools/make_sample_clips.py` (scene: day) | project-generated synthetic | unlimited (own work) |
 | `metro_coach_01.mp4` | `tools/make_sample_clips.py` (scene: night) | project-generated synthetic | unlimited (own work) |
 | `platform_02.mp4` | `tools/make_sample_clips.py` (scene: dusk) | project-generated synthetic | unlimited (own work) |
+| `crowd_real_01.mp4` | 20 s @480p segment cut from source (ffmpeg, 2026-08-25) | [Wikimedia Commons: Tielingxi Railway Station 20190429 172544000](https://commons.wikimedia.org/wiki/File:Tielingxi_Railway_Station_20190429_172544000.webm) by Tomskyhaha | **CC BY-SA 4.0** — attribution + share-alike, keep this entry |
+
+> `crowd_real_01.mp4` is a derivative (segment cut, re-encoded) of Tomskyhaha's
+> CC BY-SA 4.0 video. Redistribution must preserve attribution and the
+> share-alike terms for the clip.
+>
+> Rejected earlier candidate: "Soundscapes of Norrköping (4) - Train station"
+> (CC BY 3.0, Erik Pålsson) — near-empty platform, unusable for tracking;
+> never bundled.
 
 Regenerate deterministically:
 

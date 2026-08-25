@@ -18,6 +18,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import numpy as np
+
 from mobisentra.ingestion.config import CameraConfig, load_cameras
 from mobisentra.ingestion.sources import open_real_capture, resolve_source
 from mobisentra.ingestion.stream_reader import RealClock, StreamReader
@@ -33,6 +35,9 @@ class CameraAccumulator:
     lags_ms: list[float] = field(default_factory=list)
     consumed: int = 0
     last_stats: StreamStatsSnapshot | None = None
+    detector: object | None = None
+    history: object | None = None
+    debug_sink: object | None = None
 
 
 @dataclass
@@ -53,6 +58,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="extra RTSP source URL (camera id RTSP_EXTRA_n)")
     parser.add_argument("--metrics", type=Path, default=None,
                         help="metrics JSONL path (default runs/ingestion-<ts>.jsonl)")
+    parser.add_argument("--detect", action="store_true",
+                        help="run person detection + tracking (Phase 2)")
+    parser.add_argument("--detection-config", type=Path,
+                        default=Path("configs/detection.yaml"))
+    parser.add_argument("--debug-detections", action="store_true",
+                        help="write per-frame detection JSONL to runs/debug/")
     return parser.parse_args(argv)
 
 
@@ -62,6 +73,59 @@ def build_cameras(args: argparse.Namespace) -> list[CameraConfig]:
         cameras.append(CameraConfig(id=f"RTSP_EXTRA_{i}", source=url,
                                     vehicle_id="RTSP", analyze_every_n_frames=1))
     return cameras
+
+
+def load_detection_config(path: Path) -> dict:
+    import yaml
+
+    if not path.is_file():
+        raise SystemExit(f"detection config not found: {path}")
+    return yaml.safe_load(path.read_text()) or {}
+
+
+def attach_detection(accs: list[CameraAccumulator], det_cfg: dict, debug: bool) -> None:
+    from mobisentra.vision.track_history import TrackHistory
+    from mobisentra.vision.tracker import DetectorTracker, resolve_device
+
+    print(
+        f"[main] detection: model={det_cfg.get('model')} "
+        f"device={resolve_device(det_cfg.get('device', 'auto'))}"
+    )
+    debug_dir = Path("runs/debug") if debug else None
+    if debug_dir is not None:
+        debug_dir.mkdir(parents=True, exist_ok=True)
+    for acc in accs:
+        acc.detector = DetectorTracker(**det_cfg)
+        acc.history = TrackHistory()
+        if debug_dir is not None:
+            acc.debug_sink = (debug_dir / f"{acc.camera.id}.jsonl").open("w")
+
+
+def run_frame(acc: CameraAccumulator, frame, detect: bool, draw_on: np.ndarray | None) -> None:
+    if not detect or acc.detector is None:
+        return
+    people = acc.detector.process_frame(frame.image)
+    acc.history.update(frame.capture_ts, people)
+    if acc.debug_sink is not None:
+        import json
+
+        payload = {
+            "ts": frame.capture_ts,
+            "frame_index": frame.frame_index,
+            "people": [
+                {"id": p.track_id, "bbox": list(p.bbox), "conf": p.confidence}
+                for p in people
+            ],
+        }
+        acc.debug_sink.write(json.dumps(payload) + "\n")
+    if draw_on is not None:
+        import cv2
+
+        for p in people:
+            x1, y1, x2, y2 = (int(v) for v in p.bbox)
+            cv2.rectangle(draw_on, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(draw_on, f"ID {p.track_id}", (x1, max(12, y1 - 6)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
 
 def run(argv: list[str] | None = None) -> int:
@@ -82,6 +146,13 @@ def run(argv: list[str] | None = None) -> int:
         reader.start()
         accs.append(CameraAccumulator(camera=camera, reader=reader))
         print(f"[main] started {camera.id} ({spec.kind}: {spec.capture_arg})")
+
+    if args.detect:
+        attach_detection(
+            accs,
+            load_detection_config(args.detection_config),
+            debug=args.debug_detections,
+        )
 
     stopped = {"flag": False}
 
@@ -111,6 +182,8 @@ def run(argv: list[str] | None = None) -> int:
                         continue
                 acc.consumed += 1
                 acc.lags_ms.append(max(0.0, (clock.time() - frame.capture_ts) * 1000.0))
+                run_frame(acc, frame, detect=args.detect,
+                          draw_on=frame.image if args.preview else None)
                 if args.preview:
                     import cv2
 
@@ -161,6 +234,8 @@ def run(argv: list[str] | None = None) -> int:
         print("[main] stopping readers…")
         for acc in accs:
             acc.reader.stop()
+            if acc.debug_sink is not None:
+                acc.debug_sink.close()
         if args.preview:
             import cv2
 

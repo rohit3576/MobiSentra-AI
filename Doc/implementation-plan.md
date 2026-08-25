@@ -3,7 +3,7 @@
 > Step-by-step build plan derived from `Doc/plan.md` and web research (Aug 2026).
 > **Project type: personal open-source project** — solo-maintained, community-ready, portfolio-grade.
 > Target: laptop GPU first → NVIDIA Jetson edge later (stretch).
-> MVP slice: **CCTV → YOLO11 → ByteTrack → zones/occupancy → fall → fight → MQTT/Kafka → Node.js → React dashboard.**
+> MVP slice: **CCTV → YOLO26n → ByteTrack/BoT-SORT → zones/occupancy → fall → fight → MQTT/Kafka → Node.js → React dashboard.**
 > Deltas vs a product/company build: license-first decisions, everything runnable by a stranger with no cameras, fully open-source infra, no multi-tenant/operator enterprise features.
 
 ---
@@ -56,7 +56,7 @@ Key dependency licenses to respect (spot-check before adding anything new):
 
 | # | Capability | Approach |
 |---|-----------|----------|
-| 1 | Person detection + tracking | YOLO11n + ByteTrack (pretrained) |
+| 1 | Person detection + tracking | YOLO26n + ByteTrack/BoT-SORT (pretrained) |
 | 2 | Crowd / occupancy | Zone counting + rules (no ML) |
 | 3 | Fall / collapse detection | Pose keypoints + temporal rules → classifier later |
 | 4 | Altercation detection | Pretrained MoViNet4Violence → fine-tune later |
@@ -69,7 +69,7 @@ Later phases (post-MVP): door obstruction, restricted-zone intrusion, abandoned 
 
 | Layer | Decision | Rationale |
 |---|---|---|
-| Detection model | **YOLO11n** | 32 FPS @ 7W on Jetson Orin Nano; proven. RT-DETR rejected (slower on edge NPUs). YOLO26n = future upgrade (NMS-free, Jan 2026) |
+| Detection model | **YOLO26n** (updated 2026-08-26, Phase 2) | +2.4 mAP, −31% CPU ONNX latency, NMS-free end-to-end, smaller than YOLO11n; A/B-validated on the gate clip (0.741 vs 0.679 flicker-filtered). **Fallback: `yolo11n.pt` = one-line config change** (measured, kept working). RT-DETR rejected (slower on edge NPUs) |
 | Tracker | **ByteTrack** (static cams) / **BoT-SORT** (bus interiors) | Bus cameras move → BoT-SORT camera-motion compensation. `persist=True` mandatory |
 | Pose | **YOLO11-pose** | Same ultralytics stack = simplest MVP. RTMPose-m if throughput headroom needed later (430+ FPS GPU) |
 | Fall detection | **Hybrid: keypoint rules + temporal classifier** | OmniFall benchmark: hybrid beats end-to-end on edge. Datasets: UR Fall + Le2i (open) |

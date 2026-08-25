@@ -1,0 +1,15 @@
+# BoT-SORT tuned for crowded transit interiors (Phase 2 A/B).
+# Deltas vs stock: looser IoU matching to survive occlusion, longer memory,
+# lower new-track bar so recovered people re-attach instead of spawning IDs.
+tracker_type: botsort
+track_high_thresh: 0.25
+track_low_thresh: 0.1
+new_track_thresh: 0.2
+track_buffer: 90
+match_thresh: 0.9
+fuse_score: true
+gmc_method: sparseOptFlow
+proximity_thresh: 0.6
+appearance_thresh: 0.7
+with_reid: false
+model: auto

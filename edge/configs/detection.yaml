@@ -1,0 +1,10 @@
+# MobiSentra detection + tracking configuration (Phase 2).
+# Model is a config value — fallback path is yolo11n.pt (one-line change).
+
+model: yolo26n.pt
+device: auto            # auto (CUDA -> MPS -> CPU) | cpu | mps | cuda | 0
+conf: 0.3               # detection confidence threshold
+classes: [0]            # COCO class 0 = person (others logged, not tracked)
+imgsz: 640              # inference input size (960/1280 measured worse — see phase-2 completion)
+tracker: configs/botsort-tuned.yaml  # A/B winner 2026-08-25 (vs stock bytetrack/botsort)
+track_buffer: 90        # frames a lost track is kept before ID release

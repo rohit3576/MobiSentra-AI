@@ -2,7 +2,7 @@
 
 > Execution-ordered steps derived from `Doc/implementation-plan.md` (authoritative plan).
 > **Work top-to-bottom. A phase starts only after the previous GATE passes.**
-> MVP slice: `CCTV → YOLO11 → ByteTrack → zones/occupancy → fall → fight → MQTT/Kafka → Node.js → React dashboard`
+> MVP slice: `CCTV → YOLO26n → ByteTrack/BoT-SORT → zones/occupancy → fall → fight → MQTT/Kafka → Node.js → React dashboard`
 > Target: v0.1.0 MVP demo at Gate 9 (~14 weeks). Jetson/MLOps hardening = stretch (Phase 10).
 
 ---
@@ -31,7 +31,7 @@ Standing rules:
 |---|---|---|---|
 | 0 | Scaffold & Environment | compose up → MQTT→Kafka round-trip; CI green | ✅ Locally passed 2026-08-25 (CI activates on first push) |
 | 1 | Video Ingestion | 60 min RTSP < 200 ms lag; auto-reconnect < 15 s | ✅ Passed 2026-08-25 (max lag 148 ms; kill detected 0.0 s) |
-| 2 | Detection + Tracking | stable IDs through occlusions; ≥ 15 FPS | ☐ Not started |
+| 2 | Detection + Tracking | stable IDs through occlusions; ≥ 15 FPS | 🟡 Executed 2026-08-26 — FPS ✅ (57/44); ID metric 0.741 vs 0.80 → [owner decision pending](./phase-2-completion.md#8-gate-decision--options-for-owner) |
 | 3 | Zones / Occupancy / Door | occupancy ±10% vs manual; 0 FP on empty-zone footage | ☐ Not started |
 | 4 | Fall Detection | ≥ 90% UR Fall; < 2 FP/hr | ☐ Not started |
 | 5 | Altercation Detection | ≥ 85% fight clips; 0 alerts on 30 min normal footage | ☐ Not started |
@@ -251,10 +251,10 @@ Standing rules:
   ```bash
   cd edge && uv add ultralytics supervision
   ```
-- **Done when:** `uv run python -c "from ultralytics import YOLO; YOLO('yolo11n.pt')"` downloads weights and runs once on a sample frame.
+- **Done when:** `uv run python -c "from ultralytics import YOLO; YOLO('yolo26n.pt')"` downloads weights and runs once on a sample frame. *(executed 2026-08-25, yolo26n)*
 
 ### Step 2.2 — Detector+tracker wrapper
-- **Do:** single wrapper running YOLO11n with ByteTrack and persistence.
+- **Do:** single wrapper running YOLO26n (fallback `yolo11n.pt`) with ByteTrack/BoT-SORT and persistence. Shipped default tracker: `configs/botsort-tuned.yaml` (A/B winner).
 - **Files:** `edge/mobisentra/vision/tracker.py`.
 - **Core call:**
   ```python
@@ -285,9 +285,9 @@ Standing rules:
 - **Done when:** ≥ 15 FPS sustained at 1080p (or documented hardware limit + resolution fallback).
 
 ### GATE 2 — Detection + Tracking
-- [ ] On crowded sample footage, track IDs stay stable through partial occlusions
-- [ ] ≥ 15 FPS sustained on laptop at chosen resolution
-- [ ] **Clone test re-run:** fresh clone → quickstart still works
+- [ ] On crowded sample footage, track IDs stay stable through partial occlusions *(flicker-filtered stable_ratio 0.741 vs ≥ 0.80 on the adversarial flowing-traffic clip; best swept variant 0.763 — owner decision pending: [phase-2-completion.md §8](./phase-2-completion.md))*
+- [x] ≥ 15 FPS sustained on laptop at chosen resolution *(57.25 @720p / 44.09 @1080p, 60 s sustained, device=mps, 2026-08-26)*
+- [x] **Clone test re-run:** fresh clone → quickstart still works *(HEAD: ruff clean, 38 tests, compose config valid; full-tree sim incl. Phase 2: 54 tests + vision smoke green)*
 
 ---
 

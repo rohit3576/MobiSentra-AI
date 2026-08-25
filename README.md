@@ -25,7 +25,7 @@ MobiSentra AI is an open-source computer-vision platform that adds an **AI intel
                                  │ RTSP / MP4
                                  ↓
                      ┌──────────────────────┐
-                     │ MOBISENTRA EDGE AI   │   YOLO11 + ByteTrack + pose
+                     │ MOBISENTRA EDGE AI   │   YOLO26 + ByteTrack + pose
                      │ Detection / Tracking │   + rules engine
                      │ Pose / Zones / Fall  │
                      └──────────┬───────────┘
@@ -52,7 +52,8 @@ MobiSentra AI is an open-source computer-vision platform that adds an **AI intel
 | Dev infrastructure (Kafka, EMQX, PostgreSQL, Redis, MLflow) | ✅ Phase 0 |
 | CloudEvents schema v0 + camera registry | ✅ Phase 0 |
 | Video ingestion (RTSP/MP4/webcam, lag-free, auto-reconnect) | ✅ Phase 1 |
-| Detection + tracking / zones / fall / altercation | 🚧 Phases 2–5 |
+| Person detection + tracking (YOLO26n + tuned BoT-SORT) | 🟡 Phase 2 built — gate decision pending |
+| Zones / fall / altercation | 🚧 Phases 3–5 |
 | Event engine + messaging | 🚧 Phases 6–7 |
 | Backend + dashboard | 🚧 Phases 8–9 → **v0.1.0** |
 
