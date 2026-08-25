@@ -1,0 +1,25 @@
+# MobiSentra camera registry — documented example.
+#
+# Copy to cameras.yaml and adapt. Sources supported (Phase 1):
+#   sample://videos/<name>.mp4   bundled sample video, loops (default demo)
+#   file:///abs/path.mp4         any local video file
+#   0                            webcam (quick laptop test)
+#   rtsp://user:pass@host/stream real CCTV (config change only — never required)
+
+cameras:
+  - id: BUS_102_CAM_04
+    vehicle_id: BUS_102
+    # source: rtsp://operator:secret@10.20.30.40:554/cam/realmonitor?channel=4&subtype=0
+    source: sample://videos/bus_interior_01.mp4
+    analyze_every_n_frames: 1        # consume every Nth frame (FPS throttle)
+    zones:
+      bus_area:                      # occupancy denominator zone
+        polygon: [[0.05, 0.05], [0.95, 0.05], [0.95, 0.95], [0.05, 0.95]]
+        max_capacity: 50
+      door_roi:                      # door obstruction ROI
+        polygon: [[0.80, 0.40], [0.95, 0.40], [0.95, 0.85], [0.80, 0.85]]
+      restricted_zone: []            # optional; omit or leave empty when unused
+    thresholds:
+      occupancy_confirm_frames: 30   # hysteresis: N consecutive frames to confirm
+      restricted_loiter_seconds: 5   # dwell time before intrusion event
+      door_obstruct_seconds: 3       # dwell time before obstruction event

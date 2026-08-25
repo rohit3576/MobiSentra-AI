@@ -1,0 +1,22 @@
+{
+  "specversion": "1.0",
+  "id": "0d7ee6e1-7f42-4a6b-9c3d-2b1a5f8e9d01",
+  "source": "/mobisentra/edge/BUS_102/CAM_04",
+  "type": "org.mobisentra.event.fall_detected",
+  "time": "2026-08-25T13:20:42Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "event_type": "fall_detected",
+    "severity": "HIGH",
+    "camera_id": "BUS_102_CAM_04",
+    "location": "coach_rear",
+    "tracks": [27],
+    "confidence": 0.94,
+    "timestamp": "2026-08-25T13:20:42Z",
+    "evidence_ref": "local://evidence/BUS_102_CAM_04/0d7ee6e1.mp4",
+    "model_versions": {
+      "detector": "yolo11n@v0.1.0",
+      "pose": "yolo11n-pose@v0.1.0"
+    }
+  }
+}

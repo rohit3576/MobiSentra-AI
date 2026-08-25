@@ -75,7 +75,7 @@ Later phases (post-MVP): door obstruction, restricted-zone intrusion, abandoned 
 | Fall detection | **Hybrid: keypoint rules + temporal classifier** | OmniFall benchmark: hybrid beats end-to-end on edge. Datasets: UR Fall + Le2i (open) |
 | Fight detection | **MoViNet4Violence pretrained** (start) → **VideoMAE fine-tune** (later) | Streaming mode, ~50M params, 5.1MB INT8, open license. ⚠️ RWF-2000 is **non-commercial restricted** — use Hockey Fights / UBI-Fight for commercial work |
 | RTSP ingestion | **Threaded StreamReader** (latest-frame-only + watchdog + auto-reconnect) | Naive `cap.read()` accumulates 2–3 min lag — #1 real-world pitfall |
-| Edge→cloud messaging | **MQTT QoS 1 + local disk spool (SQLite) → bridge → Apache Kafka (server)** | Vehicles have intermittent connectivity; Kafka-on-vehicle loses data during network transitions. Kafka runs server-side behind an MQTT bridge. Apache Kafka (KRaft) over Redpanda to keep the default stack fully open |
+| Edge→cloud messaging | **MQTT QoS 1 + local disk spool (SQLite) → own MQTT→Kafka gateway service → Apache Kafka (server)** | Vehicles have intermittent connectivity; Kafka-on-vehicle loses data during network transitions. Kafka runs server-side behind a gateway. **Corrected 2026-08-25:** the planned EMQX rule-engine Kafka bridge is Enterprise-only (verified: OSS 5.8.3/5.10.3 ship no Kafka connector), so the bridge is our own thin Node gateway (`bridge/`) — stack stays fully open. MQTT topics use slashes, Kafka dots (`mobisentra/events` → `mobisentra.events`) |
 | Kafka client (Node) | **@confluentinc/kafka-javascript v1.10+** | kafkajs unmaintained since Feb 2023. Confluent client = librdkafka-backed, KafkaJS-compat mode exists |
 | Event schema | **CloudEvents envelope + JSON Schema, versioned** | `id` + `source` = idempotency key; Redis `SETNX` dedupe on consumer |
 | Backend | **Node.js + TypeScript** → PostgreSQL (history) + Redis (live state) + Socket.IO (dashboard) | Canonical pattern; PG with `INSERT ... ON CONFLICT` idempotency |
@@ -229,7 +229,7 @@ mobisentra/
 **Goal:** zero event loss from a moving vehicle.
 
 1. Edge publisher: MQTT QoS 1 to broker; **disk spool (SQLite queue) before publish** — on publish failure or no network, persist; replay on reconnect; dedupe via event `id`.
-2. Bridge: EMQX rule-engine (built-in, keeps the stack fully open-source) MQTT→Kafka, mapping topics to `mobisentra.*`. Runs in the local compose stack for dev/demo; same config deploys to any VPS later — no cloud dependency.
+2. Bridge: MQTT→Kafka gateway (`bridge/` service — EMQX OSS has no Kafka connector), mapping MQTT `mobisentra/<segment>` to Kafka `mobisentra.<segment>`. Runs in the local compose stack for dev/demo; same service deploys to any VPS later — no cloud dependency.
 3. Kill-switch tests: broker down mid-stream, network partition 5 min, duplicate delivery (QoS 1 = at-least-once) → verify the server receives each event exactly once after dedupe.
 
 **Gate:** 10 min network blackout during active events → all events arrive post-reconnect, zero loss, zero duplicates after consumer dedupe.

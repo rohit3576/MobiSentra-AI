@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mobisentra.dev/schemas/events/v0/analytics.schema.json",
+  "title": "Occupancy/analytics snapshot payload (v0)",
+  "description": "`data` payload for org.mobisentra.analytics.* — periodic aggregates such as occupancy per zone.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["camera_id", "zone", "people_count", "level", "ts"],
+  "properties": {
+    "camera_id": { "type": "string", "minLength": 1 },
+    "zone": { "type": "string", "minLength": 1 },
+    "people_count": { "type": "integer", "minimum": 0 },
+    "occupancy_ratio": { "type": "number", "minimum": 0, "description": "people_count / max_capacity; may exceed 1.0 (overcrowded)" },
+    "level": { "enum": ["NORMAL", "MODERATE", "CROWDED", "OVERCROWDED"] },
+    "ts": { "type": "string", "format": "date-time" }
+  }
+}

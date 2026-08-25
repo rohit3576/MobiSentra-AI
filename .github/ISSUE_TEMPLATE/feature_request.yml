@@ -1,0 +1,28 @@
+name: Feature request
+description: Propose a new capability or improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: The safety/operational problem, not the solution. Check the roadmap first — items already on it just need a "+1" comment.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: What should change, where (edge/backend/dashboard/infra), and any prior art.
+    validations:
+      required: true
+  - type: dropdown
+    id: fits-principles
+    attributes:
+      label: Does it work without real hardware?
+      options:
+        - "Yes — runs on bundled sample videos"
+        - "No — requires cameras/sensors/Jetson"
+        - "Not sure"
+    validations:
+      required: true

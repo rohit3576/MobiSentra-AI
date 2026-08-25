@@ -1,0 +1,22 @@
+{
+  "name": "@mobisentra/backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MobiSentra AI backend — Kafka consumer, REST API, Socket.IO push",
+  "type": "module",
+  "packageManager": "pnpm@11.23.0",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

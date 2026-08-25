@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mobisentra.dev/schemas/events/v0/alert.schema.json",
+  "title": "Operator alert payload (v0)",
+  "description": "`data` payload for org.mobisentra.alert.* — a safety event promoted to an operator-facing alert with lifecycle state.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["event_id", "event_type", "severity", "camera_id", "status", "created_at"],
+  "properties": {
+    "event_id": { "type": "string", "minLength": 1, "description": "CloudEvents `id` of the originating event" },
+    "event_type": { "type": "string" },
+    "severity": { "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+    "camera_id": { "type": "string", "minLength": 1 },
+    "vehicle_id": { "type": ["string", "null"] },
+    "status": { "enum": ["RAISED", "ACKNOWLEDGED", "ESCALATED", "RESOLVED"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "acknowledged_by": { "type": ["string", "null"], "description": "Operator identity (role handle, not passenger data)" },
+    "evidence_ref": { "type": ["string", "null"] }
+  }
+}

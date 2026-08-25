@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mobisentra.dev/schemas/events/v0/envelope.schema.json",
+  "title": "MobiSentra CloudEvents envelope (v0)",
+  "description": "Every MobiSentra message on MQTT/Kafka is wrapped in this CloudEvents 1.0 envelope. `id` + `source` form the idempotency key.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["specversion", "id", "source", "type", "time", "datacontenttype", "data"],
+  "properties": {
+    "specversion": { "const": "1.0" },
+    "id": { "type": "string", "minLength": 1, "description": "UUID — dedupe/idempotency key" },
+    "source": {
+      "type": "string",
+      "pattern": "^/mobisentra/",
+      "description": "Origin, e.g. /mobisentra/edge/BUS_102/CAM_04"
+    },
+    "type": {
+      "type": "string",
+      "pattern": "^org\\.mobisentra\\.",
+      "description": "Event type, e.g. org.mobisentra.event.fall_detected"
+    },
+    "time": { "type": "string", "format": "date-time" },
+    "datacontenttype": { "const": "application/json" },
+    "subject": { "type": "string" },
+    "data": { "type": "object" }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@mobisentra/bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MobiSentra MQTT→Kafka gateway — forwards mobisentra/# MQTT messages to Kafka topics of the same name",
+  "type": "module",
+  "packageManager": "pnpm@11.23.0",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@confluentinc/kafka-javascript": "^1.10.0",
+    "mqtt": "^5.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

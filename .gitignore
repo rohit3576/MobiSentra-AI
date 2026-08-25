@@ -34,6 +34,18 @@ videos/
 *.avi
 *.mov
 *.mkv
+# …except bundled demo videos (runs-without-hardware principle)
+!edge/sample_data/videos/
+!edge/sample_data/videos/**
+
+# Node
+node_modules/
+backend/dist/
+coverage/
+
+# Python tool caches
+.pytest_cache/
+.ruff_cache/
 
 # IDE
 .vscode/

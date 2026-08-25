@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mobisentra.dev/schemas/events/v0/event.schema.json",
+  "title": "Safety event payload (v0)",
+  "description": "`data` payload for org.mobisentra.event.* — output of the Phase 6 event engine.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["event_type", "severity", "camera_id", "timestamp", "confidence"],
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "fall_detected",
+        "altercation_suspected",
+        "overcrowding",
+        "restricted_zone_entry",
+        "door_obstruction",
+        "person_down",
+        "occupancy_level_change"
+      ]
+    },
+    "severity": { "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+    "camera_id": { "type": "string", "minLength": 1 },
+    "location": { "type": ["string", "null"] },
+    "tracks": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 0 }
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "evidence_ref": {
+      "type": ["string", "null"],
+      "description": "Reference to the evidence clip/keypoints snapshot (may be null pre-Phase 4)"
+    },
+    "model_versions": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "e.g. {\"detector\": \"yolo11n@2026-08-24\", \"pose\": \"yolo11n-pose@...\"}"
+    }
+  }
+}

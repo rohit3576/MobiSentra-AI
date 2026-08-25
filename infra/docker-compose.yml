@@ -1,0 +1,123 @@
+# MobiSentra dev stack — one command brings up the entire backend infrastructure.
+# Everything here is OSI-open licensed (Apache Kafka KRaft instead of Redpanda/BSL).
+#
+#   docker compose -f infra/docker-compose.yml up -d
+#
+# Kafka is reachable from host tooling at localhost:9092 and from other
+# containers (e.g. the EMQX bridge) at kafka:29092.
+
+name: mobisentra
+
+services:
+  kafka:
+    image: apache/kafka:4.0.0
+    container_name: mobisentra-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      CLUSTER_ID: "5L6g3nShT-eMCtK--X86sw"
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: INTERNAL://:29092,EXTERNAL://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  emqx:
+    image: emqx/emqx:5.10.3
+    container_name: mobisentra-emqx
+    ports:
+      - "1883:1883"     # MQTT
+      - "18083:18083"   # Dashboard (admin / mobisentra-dev — dev only)
+    environment:
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: mobisentra-dev
+    volumes:
+      - emqx-data:/opt/emqx/data
+      - emqx-log:/opt/emqx/log
+    healthcheck:
+      test: ["CMD", "emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  postgres:
+    image: postgres:16
+    container_name: mobisentra-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: mobisentra
+      POSTGRES_PASSWORD: mobisentra   # dev only — override via .env for anything exposed
+      POSTGRES_DB: mobisentra
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mobisentra"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    container_name: mobisentra-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  bridge:
+    build:
+      context: ../bridge
+    container_name: mobisentra-bridge
+    environment:
+      MQTT_URL: mqtt://emqx:1883
+      KAFKA_BROKER: kafka:29092
+      TOPIC_PREFIX: mobisentra
+    depends_on:
+      kafka:
+        condition: service_healthy
+      emqx:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.1.0
+    container_name: mobisentra-mlflow
+    command: >
+      mlflow server
+      --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --default-artifact-root /mlflow/artifacts
+    ports:
+      - "5001:5000"   # host 5001 — macOS AirPlay Receiver occupies 5000
+    volumes:
+      - mlflow-data:/mlflow
+
+volumes:
+  kafka-data:
+  emqx-data:
+  emqx-log:
+  pg-data:
+  redis-data:
+  mlflow-data:
