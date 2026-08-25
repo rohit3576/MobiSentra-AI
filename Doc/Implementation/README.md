@@ -7,6 +7,7 @@ Execution runbooks for building MobiSentra AI, in strict sequence.
 | Doc | Role |
 |---|---|
 | [`implementation-sequence.md`](./implementation-sequence.md) | **THE runbook** — every step in execution order, with commands, files, and gates. Start here. |
+| [`phase-0-completion.md`](./phase-0-completion.md) | Phase 0 completion report — evidence, corrections, issues hit (2026-08-25) |
 | [`../plan.md`](../plan.md) | Original vision / architecture background — *why the project exists* |
 | [`../implementation-plan.md`](../implementation-plan.md) | Locked decisions, rationale, risk register, timeline — *what we build & why* |
 | [`../handoff-2026-08-24.md`](../handoff-2026-08-24.md) | Session log from the planning session (2026-08-24) |
