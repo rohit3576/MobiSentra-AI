@@ -6,7 +6,7 @@
 
 > **Turning existing CCTV infrastructure into intelligent safety sensors for public mobility.**
 
-[![CI](https://github.com/YOUR_GITHUB_USERNAME/mobisentra/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_GITHUB_USERNAME/mobisentra/actions/workflows/ci.yml)
+[![CI](https://github.com/rohit3576/MobiSentra-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/rohit3576/MobiSentra-AI/actions/workflows/ci.yml)
 [![License: AGPL v3](.github/assets/license-agpl-v3.svg)](LICENSE)
 
 MobiSentra AI is an open-source computer-vision platform that adds an **AI intelligence layer on top of existing public-transport CCTV** — buses, metro coaches, railway coaches, stations and terminals. It converts video streams into real-time **safety events** (falls, overcrowding, altercations, zone intrusions) instead of recording footage nobody watches.
@@ -61,7 +61,7 @@ Full roadmap: [`Doc/Implementation/implementation-sequence.md`](Doc/Implementati
 ## Quickstart (dev stack)
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/mobisentra.git
+git clone https://github.com/rohit3576/MobiSentra-AI.git
 cd mobisentra
 docker compose -f infra/docker-compose.yml up -d
 ```
