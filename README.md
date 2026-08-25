@@ -51,7 +51,7 @@ MobiSentra AI is an open-source computer-vision platform that adds an **AI intel
 |---|---|
 | Dev infrastructure (Kafka, EMQX, PostgreSQL, Redis, MLflow) | ✅ Phase 0 |
 | CloudEvents schema v0 + camera registry | ✅ Phase 0 |
-| Video ingestion (RTSP/MP4/webcam, lag-free) | 🚧 Phase 1+ |
+| Video ingestion (RTSP/MP4/webcam, lag-free, auto-reconnect) | ✅ Phase 1 |
 | Detection + tracking / zones / fall / altercation | 🚧 Phases 2–5 |
 | Event engine + messaging | 🚧 Phases 6–7 |
 | Backend + dashboard | 🚧 Phases 8–9 → **v0.1.0** |

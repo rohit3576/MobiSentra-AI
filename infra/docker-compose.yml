@@ -101,6 +101,39 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  mediamtx:
+    image: bluenviron/mediamtx:1.12.0
+    container_name: mobisentra-mediamtx
+    profiles: ["rtsp"]
+    ports:
+      - "8554:8554"
+    restart: unless-stopped
+
+  fake-cam:
+    image: jrottenberg/ffmpeg:6-alpine
+    container_name: mobisentra-fake-cam
+    profiles: ["rtsp"]
+    volumes:
+      - ../edge/sample_data/videos:/data:ro
+    command:
+      - -stream_loop
+      - "-1"
+      - -re
+      - -i
+      - /data/bus_interior_01.mp4
+      - -c:v
+      - libx264
+      - -preset
+      - veryfast
+      - -tune
+      - zerolatency
+      - -f
+      - rtsp
+      - rtsp://mediamtx:8554/buscam
+    depends_on:
+      - mediamtx
+    restart: unless-stopped
+
   mlflow:
     image: ghcr.io/mlflow/mlflow:v3.1.0
     container_name: mobisentra-mlflow

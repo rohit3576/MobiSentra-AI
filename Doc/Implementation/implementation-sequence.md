@@ -30,7 +30,7 @@ Standing rules:
 | Phase | Name | Gate (one-liner) | Status |
 |---|---|---|---|
 | 0 | Scaffold & Environment | compose up → MQTT→Kafka round-trip; CI green | ✅ Locally passed 2026-08-25 (CI activates on first push) |
-| 1 | Video Ingestion | 60 min RTSP < 200 ms lag; auto-reconnect < 15 s | ☐ Not started |
+| 1 | Video Ingestion | 60 min RTSP < 200 ms lag; auto-reconnect < 15 s | ✅ Passed 2026-08-25 (max lag 148 ms; kill detected 0.0 s) |
 | 2 | Detection + Tracking | stable IDs through occlusions; ≥ 15 FPS | ☐ Not started |
 | 3 | Zones / Occupancy / Door | occupancy ±10% vs manual; 0 FP on empty-zone footage | ☐ Not started |
 | 4 | Fall Detection | ≥ 90% UR Fall; < 2 FP/hr | ☐ Not started |
@@ -236,9 +236,9 @@ Standing rules:
 - **Done when:** 60 min with < 200 ms sustained lag.
 
 ### GATE 1 — Ingestion
-- [ ] 60+ min run with < 200 ms lag
-- [ ] Camera kill → restore: auto-recovers in < 15 s, process never crashes
-- [ ] All ingestion unit tests green
+- [x] 60+ min run with < 200 ms lag *(2026-08-25: 3600 s soak, 4 cameras incl. live RTSP; worst max 148 ms, p95 ≤ 22 ms)*
+- [x] Camera kill → restore: auto-recovers in < 15 s, process never crashes *(fault-injection test: left UP in 0.0 s, recovered on restore)*
+- [x] All ingestion unit tests green *(38/38 incl. Phase 0; ruff clean)*
 
 ---
 

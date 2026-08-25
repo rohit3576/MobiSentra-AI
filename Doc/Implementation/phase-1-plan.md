@@ -1,6 +1,6 @@
 # Phase 1 — Video Ingestion · Plan
 
-> **Status: DRAFT — awaiting owner approval before implementation**
+> **Status: APPROVED & EXECUTED 2026-08-25 — see [`phase-1-completion.md`](./phase-1-completion.md) for results (Gate 1 PASSED)**
 > Source of truth: [`implementation-sequence.md`](./implementation-sequence.md) → Phase 1 (on conflict, runbook + `implementation-plan.md` win)
 > Duration: ~1 week · Budget: 6 build days + 1 soak/doc day
 > Prerequisite: Gate 0 ✅ (2026-08-25)
