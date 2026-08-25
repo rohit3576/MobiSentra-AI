@@ -7,7 +7,7 @@
 > **Turning existing CCTV infrastructure into intelligent safety sensors for public mobility.**
 
 [![CI](https://github.com/YOUR_GITHUB_USERNAME/mobisentra/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_GITHUB_USERNAME/mobisentra/actions/workflows/ci.yml)
-[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+[![License: AGPL v3](.github/assets/license-agpl-v3.svg)](LICENSE)
 
 MobiSentra AI is an open-source computer-vision platform that adds an **AI intelligence layer on top of existing public-transport CCTV** — buses, metro coaches, railway coaches, stations and terminals. It converts video streams into real-time **safety events** (falls, overcrowding, altercations, zone intrusions) instead of recording footage nobody watches.
 
