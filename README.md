@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/assets/icon.png" width="128" alt="MobiSentra AI logo" />
+</p>
+
 # MobiSentra AI
 
 > **Turning existing CCTV infrastructure into intelligent safety sensors for public mobility.**
