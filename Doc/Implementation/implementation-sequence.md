@@ -33,7 +33,7 @@ Standing rules:
 | 1 | Video Ingestion | 60 min RTSP < 200 ms lag; auto-reconnect < 15 s | ✅ Passed 2026-08-25 (max lag 148 ms; kill detected 0.0 s) |
 | 2 | Detection + Tracking | stable IDs through occlusions; ≥ 15 FPS | 🟡 Executed 2026-08-26 — FPS ✅ (57/44); ID metric 0.741 vs 0.80 → [owner decision pending](./phase-2-completion.md#8-gate-decision--options-for-owner) |
 | 3 | Zones / Occupancy / Door | occupancy ±10% vs manual; 0 FP on empty-zone footage | 🟡 In progress — Steps 3.1–3.5 done 2026-08-26 (zones/engine/occupancy/dwell wired e2e + zone editor round-trip; remaining: Day 6 gate evidence + Day 7 completion) |
-| 4 | Fall Detection | ≥ 90% UR Fall; < 2 FP/hr | ☐ Not started |
+| 4 | Fall Detection | ≥ 90% UR Fall; < 2 FP/hr | 🟡 In progress — Step 4.1 done 2026-08-26 (yolo26n-pose swap: TrackedPose + keypoint history, real-model smoke on bus1) |
 | 5 | Altercation Detection | ≥ 85% fight clips; 0 alerts on 30 min normal footage | ☐ Not started |
 | 6 | Event Engine + Severity | golden-file tests pass | ☐ Not started |
 | 7 | Edge Messaging | 10-min blackout → zero loss, zero dupes | ☐ Not started |
@@ -334,7 +334,7 @@ Standing rules:
 > **Goal:** fall/collapse events with low false positives. Hybrid: keypoint rules + temporal classifier (later).
 
 ### Step 4.1 — Pose model swap
-- **Do:** `yolo11n-pose.pt`; carry track IDs through pose results (pose runs inside the same track call).
+- **Do:** `yolo26n-pose.pt` (updated 2026-08-26 — YOLO26 family per the locked model decision; `yolo11n-pose.pt` = fallback); carry track IDs through pose results (pose runs inside the same track call).
 - **Files:** `edge/mobisentra/vision/pose.py`.
 - **Done when:** per-frame (track_id → 17/33 keypoints) flows into track history alongside boxes.
 

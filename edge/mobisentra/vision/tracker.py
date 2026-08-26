@@ -96,7 +96,10 @@ class DetectorTracker:
         results = model.track(image, device=self._device, **kwargs)
         if not results:
             return []
-        return postprocess_results(results[0], tracked_classes=self._classes)
+        return self._postprocess(results[0])
+
+    def _postprocess(self, result) -> list[TrackedPerson]:
+        return postprocess_results(result, tracked_classes=self._classes)
 
 
 def postprocess_results(result, tracked_classes: list[int] | None) -> list[TrackedPerson]:
@@ -158,9 +161,7 @@ def _tracker_override_path(base_name: str, track_buffer: int) -> str | None:
         else:
             cfg["track_buffer"] = track_buffer
         safe_stem = stem.replace("/", "-")
-        tmp = tempfile.NamedTemporaryFile(
-            "w", suffix=f"-mobisentra-{safe_stem}.yaml", delete=False
-        )
+        tmp = tempfile.NamedTemporaryFile("w", suffix=f"-mobisentra-{safe_stem}.yaml", delete=False)
         yaml.safe_dump(cfg, tmp)
         tmp.close()
         _TRACKER_CACHE[key] = tmp.name

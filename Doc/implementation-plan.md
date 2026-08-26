@@ -186,7 +186,7 @@ mobisentra/
 
 **Goal:** fall/collapse events with low false positives.
 
-1. Swap detector to `yolo11n-pose.pt`; carry track IDs through pose results.
+1. Swap detector to `yolo26n-pose.pt` (updated 2026-08-26: same family/decision as the detection model — YOLO26, A/B-validated in Phase 2; fallback `yolo11n-pose.pt` = one-line config change); carry track IDs through pose results.
 2. Per-track keypoint features: torso angle, head-hip distance (normalized by box height), vertical velocity, aspect ratio of bbox.
 3. Rule cascade v1: rapid downward vertical velocity + torso goes horizontal + head near hip level + **no recovery movement for T seconds** → fall candidate.
 4. Evidence buffer: keep rolling ~5s of frames per track; on trigger, snapshot clip + keypoints for the event payload (evidence, per plan §14).

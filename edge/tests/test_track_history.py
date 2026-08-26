@@ -57,3 +57,46 @@ def test_unknown_track_returns_empty():
     history.update(0.0, [person(1)])
     assert history.history(999) == []
     assert history.last_sample(999) is None
+
+
+# ── Phase 4: parallel keypoint buffer ──────────────────────────────────────
+
+from mobisentra.vision.pose import N_KEYPOINTS, TrackedPose  # noqa: E402
+
+
+def pose(track_id: int, x: float = 1.0) -> TrackedPose:
+    return TrackedPose(
+        track_id=track_id,
+        bbox=(0.0, 0.0, 10.0, 20.0),
+        confidence=0.9,
+        keypoints=tuple((x + joint, 0.0, 0.9) for joint in range(N_KEYPOINTS)),
+    )
+
+
+def test_update_poses_stores_keypoint_history():
+    history = TrackHistory(capacity_seconds=10.0)
+    history.update_poses(1.0, [pose(5, x=1.0)])
+    history.update_poses(2.0, [pose(5, x=2.0)])
+
+    samples = history.pose_history(5)
+    assert [s.ts for s in samples] == [1.0, 2.0]
+    assert samples[0].keypoints[0] == (1.0, 0.0, 0.9)
+    assert samples[1].keypoints[16] == (18.0, 0.0, 0.9)
+
+
+def test_pose_history_window_and_unknown_track():
+    history = TrackHistory()
+    history.update_poses(1.0, [pose(5)])
+    history.update_poses(5.0, [pose(5)])
+    assert [s.ts for s in history.pose_history(5, seconds=1.0)] == [5.0]
+    assert history.pose_history(99) == []
+
+
+def test_pose_buffer_respects_capacity_and_purge():
+    history = TrackHistory(capacity_seconds=2.0, stale_seconds=5.0)
+    history.update_poses(0.0, [pose(5)])
+    history.update_poses(3.0, [pose(5)])  # first sample now beyond capacity
+    assert [s.ts for s in history.pose_history(5)] == [3.0]
+
+    assert history.purge(now=100.0) == [5]
+    assert history.pose_history(5) == []
