@@ -33,7 +33,7 @@ Everything downstream of Phase 2's tracker. Output is **candidate events** (inte
 | Occupancy bands | ratio = count / max_capacity → Normal < 0.70 · Moderate 0.70–0.90 · Crowded > 0.90 · Overcrowded > 1.00 | runbook values |
 | Hysteresis | band change confirmed only after `occupancy_confirm_frames` **consecutive analyzed frames** (registry value, default 30) | kills boundary flicker; analyzed-frame basis matches `analyze_every_n_frames` throttling |
 | Dwell semantics (Phase 2 lesson) | in-zone time accumulates per (track_id, zone) from wall-clock `capture_ts`; detection dropouts ≤ 0.5 s tolerated (not reset); event at accumulated ≥ threshold; re-arm only after the track leaves ≥ 2× threshold or is purged | ID/detection dropouts at 0.741 fragmentation must not reset legitimately loitering tracks; wall-clock not frame-count (framerate varies) |
-| Event sink | JSONL to `runs/events/<camera_id>.jsonl` (gitignored): `occupancy.band_change`, `zone.intrusion`, `zone.door_obstructed`; payload = camera, zone, track_id, band/count/ratio, first_seen_ts, ts | Phase 6 owns envelopes/severity/MQTT — Phase 3 vocabulary already matches schemas v0 event kinds |
+| Event sink | JSONL to `runs/events/<camera_id>.jsonl` (gitignored): `occupancy_level_change`, `restricted_zone_entry`, `door_obstruction` — kind strings are schemas v0 `event_type` values so Phase 6 envelopes candidates without renaming; payload = camera, zone, track_id, band/count/ratio, first_seen_ts, ts | Phase 6 owns envelopes/severity/MQTT — Phase 3 vocabulary matches schemas v0 event kinds |
 | Door telemetry slot | event payload reserves `door_state: "unknown"` field; **no** MQTT input implementation | runbook Step 3.4 reservation |
 | Wiring | analytics auto-on when a camera has zones and `--detect` is active (one log line); no new CLI flags; zone ops run on every analyzed frame | zero-config for the sample registry; flags breed drift (Phase 2's `--track-buffer` lesson) |
 | Zone editor | minimal OpenCV window: click points, `r` reset, Enter closes polygon → prints/writes normalized YAML `zones:` snippet | runbook "simple is fine"; polish is a labeled `good first issue` |
@@ -91,7 +91,7 @@ Manual counting is **owner time (~10 min)**: 5 frames, count heads in zone. `occ
 |---|---|---|---|
 | 1 | 3.1 | `ZoneConfig` typed + registry sample updated; `zones.py` ZoneEngine; `test_zone_engine.py` + `test_zone_config.py` green | ☐ |
 | 2 | 3.2 | `occupancy.py` + `test_occupancy.py` green — hysteresis proven (boundary sequence: no flicker) | ✅ 2026-08-26 |
-| 3 | 3.3 + 3.4 | `zone_events.py` DwellTracker (restricted + door share the mechanic) + `test_zone_events.py` green — dropout tolerance + re-arm proven | ☐ |
+| 3 | 3.3 + 3.4 | `zone_events.py` DwellTracker (restricted + door share the mechanic) + `test_zone_events.py` green — dropout tolerance + re-arm proven | ✅ 2026-08-26 |
 | 4 | wiring | `main.py` runs analytics when zones present; `runs/events/*.jsonl` produced on real clip; `--preview` shows zone overlays; ruff + full suite green | ☐ |
 | 5 | 3.5 | `tools/zone_editor.py` + round-trip unit test green (gate 3 evidence) | ☐ |
 | 6 | 3.6 | `tools/occupancy_check.py`; owner manual counts (5 frames); 30-min synthetic FP soak; real-clip intrusion spot-check | ☐ |
