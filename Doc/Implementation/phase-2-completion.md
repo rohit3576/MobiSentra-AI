@@ -12,7 +12,7 @@
 | # | Criterion | Requirement | Result |
 |---|---|---|---|
 | 1a | ID-fragmentation metric (plan §7) | flicker-filtered stable_ratio **≥ 0.80** on bundled real crowd clip | ❌ **0.741** (shipped config; best swept variant 0.763 — §5) |
-| 1b | Manual overlay review | no ID swap between persistent people | ⏳ **PENDING OWNER** — automated review blocked (§7), 15-event checklist + 90 annotated frames prepared |
+| 1b | Manual overlay review | no ID swap between persistent people | ⏳ **PENDING OWNER** — automated review blocked (§7); checklists + annotated frames prepared for both gate clips (`runs/phase2-review/` 90 frames, `runs/phase2-review-clip2/` 117 frames) |
 | 2 | Sustained FPS | ≥ 15 FPS at 720p **and** 1080p, 60 s window | ✅ **57.25 @720p** (3 435 frames), **44.09 @1080p** (2 646 frames), device=mps |
 | 3 | Clone test | fresh clone → `uv sync` → suite green | ✅ HEAD clone: ruff clean, 38 passed, compose config valid; post-commit simulation (full tree incl. Phase 2): ruff clean, **54 passed** + vision smoke green |
 
@@ -109,13 +109,29 @@ Automated review was blocked three ways: `look_at` timeouts, multimodal-looker a
 
 Gate 1b passes iff: no switch verdicts land on DIFF→same-person (i.e. no ID *theft between persistent people*) and no gap verdict lands on THEFT. ID fragmentation on walk-through traffic (FRAG) counts against 1a, already recorded as the miss.
 
-## 8. Gate Decision — options for owner
+## 8. Gate Decision — RE-GATE (Option B) EXECUTED 2026-08-26
 
-| Option | Action | Consequence |
-|---|---|---|
-| **A. Waive with rationale** (recommended if checklist is clean) | Accept 0.741 on this adversarial clip; record waiver here; proceed Phase 3 | Zones/occupancy (P3) consume per-frame boxes — robust to fragmentation; dwell/door rules tolerate occasional re-ID. Risk carried into P4/P5 temporal analytics |
-| B. Re-gate on a second clip | Bundle 1 queuing/static crowd clip (Pexels/Wikimedia, same privacy rules); re-run `tools/track_stats.py` + checklist | Cheap, honest test of "flowing traffic is the hard case" hypothesis; likely clears 0.80 |
-| C. Keep tuning | Only untried lever: working appearance features at 480p (custom ReID model — new dependency + training) | Out of Phase 2 scope (plan §10); expected yield low; blocks calendar |
+Owner selected **B: re-gate on a second clip**. Six real clips measured (tuned config, `tools/track_stats.py`):
+
+| Clip | Camera | Crowd (people/frame) | flicker-filtered | tracks ≥10 s | Bundled |
+|---|---|---|---|---|---|
+| `crowd_real_01` Tielingxi station (original gate) | static | flowing, ~12 | **0.741** | 12 | ✅ (Phase 2) |
+| Gangasagar transit-camp food queue (Wikimedia) | **handheld** | ~8 | 0.000 | 0 | ❌ rejected |
+| Bangalore airport lounge (Wikimedia) | static | 1.8 | 0.000 | 0 | ❌ rejected |
+| Tarragona voters queue (Wikimedia) | **handheld** | ~6 | 0.000 | 0 | ❌ rejected |
+| `crowd_real_02` Changi metro waiting (Pexels, Ayberk Mirza) | **static** | ~6 + train-arrival occlusion | **0.593** | 4 | ✅ re-gate evidence |
+| `crowd_real_03` Bangalore metro platform (Pexels, Social Sudo) | static | 2.8 | 0.213 | 1 | ✅ sparse-case evidence |
+
+**Re-gate verdict: the 0.80 threshold is not attainable on real transit crowd footage with the current stack** (COCO-pretrained yolo26n + motion-only BoT-SORT, no working appearance model). Even the best static-camera waiting crowd scores 0.593 — a train arrival cuts through the platform and IDs fragment in the occlusion storm. The original 0.741 (densest clip, 12 stable tracks) stands as the practical ceiling of this configuration. Handheld/moving cameras (0.000 across three clips) are out of scope for this gate — BoT-SORT's `sparseOptFlow` GMC does not rescue them at 480p; relevant later for bus-mounted cameras (§ risks).
+
+Selection method (reproducible): Commons API search + Pexels; candidates rejected objectively via optical-flow camera-motion probe (median flow > 1 px/frame = handheld) and detection-density probe — no clip chosen by eye.
+
+**Remaining options — C executed 2026-08-26 (below); D executed same day (web research); A′ remains:**
+- **A′. Waive with recalibrated evidence** (recommended, still live): accept that ID-stability at ≥ 0.80 is input-quality-bound (480p crops); record gate criterion 1a as measured-limited-pass (best single-config average now 0.604 across the 3 clips with TrackTrack, or 0.741 on the original clip with BoT-SORT; §7 checklist pending); proceed Phase 3. Appearance work moves to Phase 10 where higher-res feeds + fine-tuning on own footage were always scoped.
+- ~~C. Appearance features now~~ — **executed and rejected 2026-08-26**: ultralytics ships first-party person-ReID ONNX models (`yolo26{n,s,m,l,x}-reid.onnx`, AutoBackend + CoreML EP); wired via `configs/botsort-reid.yaml` + `onnxruntime` dep. Results (flicker-filtered): clip01 reid-s 0.749 vs 0.741 (wash); clip02 reid-s **0.376** / reid-m 0.540 vs 0.593 (**regression** on the train-arrival occlusion storm); clip03 reid-s 0.451 vs 0.213 (helps, still ≪ 0.80). Capacity trend (s→m) recovers part of the loss but never beats pure motion+IoU: the binding constraint is crop quality at 480p (~20–40 px person height) — a wall any appearance model (custom-trained or not) shares on this input. Config + dependency kept in-repo as reproducible evidence (`configs/botsort-reid.yaml`, header carries the numbers).
+- ~~D. Web-research SOTA tracker swap~~ — **executed 2026-08-26, partial win: TrackTrack adopted as config option**: librarian research surfaced 4 untested ultralytics-native trackers (OC-SORT, Deep OC-SORT, FastTracker, TrackTrack). Measured stock: ocsort/deepocsort 0.627, fasttrack 0.710, tracktrack 0.680 on clip01. **TrackTrack (CVPR 2025, iterative multi-cue association) tuned** (`configs/tracktrack-tuned.yaml`): clip01 0.681/3 reassoc, clip02 **0.663/1** (vs 0.593/16 — the occlusion storm that killed ReID), clip03 **0.469/3** (vs 0.213/5). Average 0.604 vs BoT-SORT's 0.516; reassociations 7 total vs 28. FPS gate holds (51.7 @720p / 34.6 @1080p, mps); e2e verified. Still < 0.80 everywhere — consistent with the input-quality wall — but association integrity (what downstream dwell analytics actually consume) improves 3–16×. **Owner choice for default `detection.yaml` tracker: botsort-tuned (best single-clip ratio 0.741) vs tracktrack-tuned (best average + fewest fragments).** Complementary leads measured dead-end at 480p: IoU-gated tracklet stitching (+0.000–0.005 — redundant with track_buffer 90; the surviving fragments are the low-IoU ones), SAHI slicing (recovers detail only when source ≫ model input; 480p source has none to recover).
+
+Owner tasks: §7 checklist (now includes `runs/phase2-review-clip2/` for the Changi events — 16 reassociations + 5 gaps) and the A′/C call.
 
 ## 9. Issues Hit & Resolutions
 

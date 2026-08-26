@@ -285,7 +285,7 @@ Standing rules:
 - **Done when:** ≥ 15 FPS sustained at 1080p (or documented hardware limit + resolution fallback).
 
 ### GATE 2 — Detection + Tracking
-- [ ] On crowded sample footage, track IDs stay stable through partial occlusions *(flicker-filtered stable_ratio 0.741 vs ≥ 0.80 on the adversarial flowing-traffic clip; best swept variant 0.763 — owner decision pending: [phase-2-completion.md §8](./phase-2-completion.md))*
+- [ ] On crowded sample footage, track IDs stay stable through partial occlusions *(re-gate 2026-08-26: 6 clips measured, best 0.741; Option C first-party ReID executed same day — REGRESSION on occlusion clip (0.376–0.540 vs 0.593), rejected with evidence in [phase-2-completion.md §8](./phase-2-completion.md); 0.80 is input-quality-bound at 480p — A′ waive decision pending)*
 - [x] ≥ 15 FPS sustained on laptop at chosen resolution *(57.25 @720p / 44.09 @1080p, 60 s sustained, device=mps, 2026-08-26)*
 - [x] **Clone test re-run:** fresh clone → quickstart still works *(HEAD: ruff clean, 38 tests, compose config valid; full-tree sim incl. Phase 2: 54 tests + vision smoke green)*
 

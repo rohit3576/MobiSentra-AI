@@ -1,0 +1,40 @@
+# TrackTrack tuned for crowded transit interiors (Phase 2 web-research option, 2026-08-26).
+# Paper: "Focusing on Tracks for Online Multi-Object Tracking" (CVPR 2025), ultralytics-native.
+# Deltas vs stock (stock defaults chase MOT17 benchmark, not 480p crowd recall):
+# thresholds lowered to our tuned regime (high 0.25 / low 0.1 / new 0.2), buffer 90,
+# lost_match_thr 0.9 (relaxed rebind pass for long occlusions), tai_thr 0.3.
+# Gate metric vs botsort-tuned (flicker-filtered / reassociations):
+#   clip01 station: 0.681 / 3   vs 0.741 / 7
+#   clip02 Changi:  0.663 / 1   vs 0.593 / 16   <- occlusion storm: 16x fewer fragments
+#   clip03 sparse:  0.469 / 3   vs 0.213 / 5    <- 2.2x the ratio
+# Average 0.604 vs 0.516; far fewer ID fragmentations (what breaks dwell analytics).
+# See phase-2-completion.md §8.
+tracker_type: tracktrack # (str) Tracker backend: tracktrack
+track_high_thresh: 0.25 # (float) High-confidence detection threshold
+track_low_thresh: 0.1 # (float) Low-confidence detection threshold for second stage
+new_track_thresh: 0.2 # (float) Minimum score to start a new track via track-aware initialization (TAI)
+track_buffer: 90 # (int) Frames to keep lost tracks alive
+match_thresh: 0.7 # (float) Initial matching threshold for iterative assignment
+lost_match_thr: 0.9 # (float) Looser rebind cost gate for still-Lost tracks; 0 disables the relaxed second pass. Raise above match_thresh (e.g. 0.9) for long-occlusion scenes
+
+# Association weights
+iou_weight: 0.5 # (float) Weight for HMIoU distance in cost matrix
+reid_weight: 0.5 # (float) Weight for cosine distance (or HMIoU fallback if no ReID)
+conf_weight: 0.1 # (float) Weight for confidence distance
+angle_weight: 0.05 # (float) Weight for corner angle distance
+
+# Iterative assignment
+penalty_p: 0.2 # (float) Cost penalty for low-confidence detections
+penalty_q: 0.4 # (float) Cost penalty for deleted/recovered detections
+reduce_step: 0.05 # (float) Threshold reduction per iteration
+
+# Track-Aware Initialization (TAI)
+tai_thr: 0.3 # (float) IoU threshold for TAI NMS suppression
+min_track_len: 3 # (int) Minimum history length before track is confirmed
+
+# Camera motion compensation
+gmc_method: sparseOptFlow # (str) GMC method: sparseOptFlow, orb, sift, ecc, none
+
+# ReID
+with_reid: False # (bool) Enable ReID feature matching
+model: auto # (str) ReID model path; 'auto' uses native YOLO features

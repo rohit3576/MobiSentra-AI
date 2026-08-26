@@ -1,0 +1,20 @@
+# BoT-SORT tuned + first-party ReID — ⚠️ REJECTED 2026-08-26, kept as evidence.
+# Gate metric (flicker-filtered) vs botsort-tuned.yaml (no ReID):
+#   clip01 station:  0.749 (n) vs 0.741 — wash
+#   clip02 Changi:   0.376 (s) / 0.540 (m) vs 0.593 — REGRESSION on the primary
+#                    occlusion case; appearance embeddings from ~20-40px 480p
+#                    crowd crops mis-assign through occlusion storms
+#   clip03 sparse:   0.451 (s) vs 0.213 — better, still far below 0.80 gate
+# Do NOT ship as default. Revisit in Phase 10 (higher-res feeds + fine-tuning).
+tracker_type: botsort
+track_high_thresh: 0.25
+track_low_thresh: 0.1
+new_track_thresh: 0.2
+track_buffer: 90
+match_thresh: 0.9
+fuse_score: true
+gmc_method: sparseOptFlow
+proximity_thresh: 0.6
+appearance_thresh: 0.7
+with_reid: true
+model: yolo26n-reid.onnx

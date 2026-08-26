@@ -11,6 +11,8 @@ dependencies = [
     "ultralytics>=8.4.128",
     "supervision>=0.30.1",
     "lap>=0.5.13",
+    "onnxruntime>=1.29.0",
+    "onnx>=1.22.0",
 ]
 
 [dependency-groups]
