@@ -24,6 +24,7 @@ class TrackSample:
 @dataclass(frozen=True)
 class PoseSample:
     ts: float
+    bbox: tuple[float, float, float, float]
     keypoints: tuple[Keypoint, ...]
 
 
@@ -66,7 +67,7 @@ class TrackHistory:
         """Store per-track skeletons (Phase 4); separate buffer, same trim."""
         for pose in poses:
             samples = self._poses.setdefault(pose.track_id, deque())
-            samples.append(PoseSample(ts=ts, keypoints=pose.keypoints))
+            samples.append(PoseSample(ts=ts, bbox=pose.bbox, keypoints=pose.keypoints))
         self._trim(now=ts)
 
     def _trim(self, now: float) -> None:
