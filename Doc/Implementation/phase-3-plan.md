@@ -93,7 +93,7 @@ Manual counting is **owner time (~10 min)**: 5 frames, count heads in zone. `occ
 | 2 | 3.2 | `occupancy.py` + `test_occupancy.py` green — hysteresis proven (boundary sequence: no flicker) | ✅ 2026-08-26 |
 | 3 | 3.3 + 3.4 | `zone_events.py` DwellTracker (restricted + door share the mechanic) + `test_zone_events.py` green — dropout tolerance + re-arm proven | ✅ 2026-08-26 |
 | 4 | wiring | `main.py`/`pipeline.py` runs analytics when zones present; `runs/events/*.jsonl` produced on real clip; `--preview` shows zone overlays; ruff + full suite green | ✅ 2026-08-26 (e2e on bus1.mp4: restricted_zone_entry rows with full payloads) |
-| 5 | 3.5 | `tools/zone_editor.py` + round-trip unit test green (gate 3 evidence) | ☐ |
+| 5 | 3.5 | `tools/zone_editor.py` + round-trip unit test green (gate 3 evidence) | ✅ 2026-08-26 |
 | 6 | 3.6 | `tools/occupancy_check.py`; owner manual counts (5 frames); 30-min synthetic FP soak; real-clip intrusion spot-check | ☐ |
 | 7 | buffer | `phase-3-completion.md`; bench sanity (≥ 15 FPS still); gate review with owner | ☐ |
 
