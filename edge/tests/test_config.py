@@ -16,6 +16,7 @@ cameras:
     vehicle_id: V1
     zones:
       bus_area:
+        type: restricted
         polygon: [[0.1, 0.1], [0.9, 0.1], [0.9, 0.9]]
     thresholds:
       occupancy_confirm_frames: 10

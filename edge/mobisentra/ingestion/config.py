@@ -8,6 +8,7 @@ point at bundled sample videos so the whole system runs without hardware.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -18,10 +19,20 @@ class ConfigError(ValueError):
     """Raised when the camera registry YAML is invalid."""
 
 
+class ZoneType(StrEnum):
+    """Semantic role of a zone — decides which event logic applies."""
+
+    OCCUPANCY = "occupancy"
+    RESTRICTED = "restricted"
+    DOOR = "door"
+
+
 @dataclass(frozen=True)
 class ZoneConfig:
     name: str
+    zone_type: ZoneType
     polygon: tuple[tuple[float, float], ...]
+    max_capacity: int | None = None
 
 
 @dataclass(frozen=True)
@@ -56,9 +67,7 @@ def _parse_polygon(raw: object, camera_id: str, zone_name: str) -> tuple[tuple[f
     points: list[tuple[float, float]] = []
     for point in raw:
         if not isinstance(point, (list, tuple)) or len(point) != 2:
-            raise ConfigError(
-                f"camera '{camera_id}' zone '{zone_name}': each point must be [x, y]"
-            )
+            raise ConfigError(f"camera '{camera_id}' zone '{zone_name}': each point must be [x, y]")
         coords: list[float] = []
         for value in point:
             if isinstance(value, bool) or not isinstance(value, int | float):
@@ -73,6 +82,42 @@ def _parse_polygon(raw: object, camera_id: str, zone_name: str) -> tuple[tuple[f
             coords.append(float(value))
         points.append((coords[0], coords[1]))
     return tuple(points)
+
+
+def _parse_zone(name: str, spec: dict[str, Any], camera_id: str) -> ZoneConfig:
+    raw_type = spec.get("type")
+    if not isinstance(raw_type, str):
+        raise ConfigError(
+            f"camera '{camera_id}' zone '{name}': 'type' is required "
+            f"(one of: {', '.join(t.value for t in ZoneType)})"
+        )
+    try:
+        zone_type = ZoneType(raw_type)
+    except ValueError:
+        raise ConfigError(
+            f"camera '{camera_id}' zone '{name}': unknown type '{raw_type}' "
+            f"(expected one of: {', '.join(t.value for t in ZoneType)})"
+        ) from None
+
+    raw_capacity = spec.get("max_capacity")
+    if zone_type is ZoneType.OCCUPANCY:
+        if isinstance(raw_capacity, bool) or not isinstance(raw_capacity, int) or raw_capacity < 1:
+            raise ConfigError(
+                f"camera '{camera_id}' zone '{name}': occupancy zones need "
+                f"'max_capacity' as an integer >= 1"
+            )
+    elif raw_capacity is not None:
+        raise ConfigError(
+            f"camera '{camera_id}' zone '{name}': 'max_capacity' is only valid "
+            f"for occupancy zones (zone type is '{zone_type.value}')"
+        )
+
+    return ZoneConfig(
+        name=name,
+        zone_type=zone_type,
+        polygon=_parse_polygon(spec.get("polygon"), camera_id, name),
+        max_capacity=raw_capacity if zone_type is ZoneType.OCCUPANCY else None,
+    )
 
 
 def _parse_thresholds(raw: object, camera_id: str) -> Thresholds:
@@ -123,7 +168,7 @@ def _parse_camera(raw: object) -> CameraConfig:
     if not isinstance(zones_raw, dict):
         raise ConfigError(f"camera '{camera_id}': 'zones' must be a mapping")
     zones = {
-        name: ZoneConfig(name=name, polygon=_parse_polygon(spec["polygon"], camera_id, name))
+        name: _parse_zone(name, spec, camera_id)
         for name, spec in zones_raw.items()
         if isinstance(spec, dict) and spec.get("polygon")
     }
