@@ -90,7 +90,7 @@ Manual counting is **owner time (~10 min)**: 5 frames, count heads in zone. `occ
 | Day | Runbook step | Deliverable (done-when) | ☐ |
 |---|---|---|---|
 | 1 | 3.1 | `ZoneConfig` typed + registry sample updated; `zones.py` ZoneEngine; `test_zone_engine.py` + `test_zone_config.py` green | ☐ |
-| 2 | 3.2 | `occupancy.py` + `test_occupancy.py` green — hysteresis proven (boundary sequence: no flicker) | ☐ |
+| 2 | 3.2 | `occupancy.py` + `test_occupancy.py` green — hysteresis proven (boundary sequence: no flicker) | ✅ 2026-08-26 |
 | 3 | 3.3 + 3.4 | `zone_events.py` DwellTracker (restricted + door share the mechanic) + `test_zone_events.py` green — dropout tolerance + re-arm proven | ☐ |
 | 4 | wiring | `main.py` runs analytics when zones present; `runs/events/*.jsonl` produced on real clip; `--preview` shows zone overlays; ruff + full suite green | ☐ |
 | 5 | 3.5 | `tools/zone_editor.py` + round-trip unit test green (gate 3 evidence) | ☐ |
