@@ -6,5 +6,5 @@ device: auto            # auto (CUDA -> MPS -> CPU) | cpu | mps | cuda | 0
 conf: 0.3               # detection confidence threshold
 classes: [0]            # COCO class 0 = person (others logged, not tracked)
 imgsz: 640              # inference input size (960/1280 measured worse — see phase-2 completion)
-tracker: configs/botsort-tuned.yaml  # A/B winner 2026-08-25 (vs stock bytetrack/botsort)
+tracker: configs/tracktrack-tuned.yaml  # shipped default 2026-08-26: best avg gate metric + 4x fewer ID fragments; botsort-tuned.yaml = single-clip ratio peak (0.741), kept as fallback
 track_buffer: 90        # frames a lost track is kept before ID release

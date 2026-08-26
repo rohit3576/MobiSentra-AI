@@ -254,7 +254,7 @@ Standing rules:
 - **Done when:** `uv run python -c "from ultralytics import YOLO; YOLO('yolo26n.pt')"` downloads weights and runs once on a sample frame. *(executed 2026-08-25, yolo26n)*
 
 ### Step 2.2 — Detector+tracker wrapper
-- **Do:** single wrapper running YOLO26n (fallback `yolo11n.pt`) with ByteTrack/BoT-SORT and persistence. Shipped default tracker: `configs/botsort-tuned.yaml` (A/B winner).
+- **Do:** single wrapper running YOLO26n (fallback `yolo11n.pt`) with ByteTrack/BoT-SORT and persistence. Shipped default tracker (2026-08-26): `configs/tracktrack-tuned.yaml` — best avg gate metric + 4× fewer ID fragments; `botsort-tuned.yaml` kept as single-clip-ratio fallback.
 - **Files:** `edge/mobisentra/vision/tracker.py`.
 - **Core call:**
   ```python

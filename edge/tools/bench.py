@@ -57,7 +57,7 @@ def main() -> None:
     parser.add_argument("--resolutions", nargs="+", default=["1280x720", "1920x1080"])
     parser.add_argument("--model", default="yolo26n.pt")
     parser.add_argument("--conf", type=float, default=0.3)
-    parser.add_argument("--tracker", default="configs/botsort-tuned.yaml")
+    parser.add_argument("--tracker", default="configs/tracktrack-tuned.yaml")
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args()
 
