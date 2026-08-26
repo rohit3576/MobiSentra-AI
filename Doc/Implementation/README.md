@@ -15,6 +15,7 @@ Execution runbooks for building MobiSentra AI, in strict sequence.
 | [`phase-0-completion.md`](./phase-0-completion.md) | Phase 0 completion report — evidence, corrections, issues hit (2026-08-25) |
 | [`../plan.md`](../plan.md) | Original vision / architecture background — *why the project exists* |
 | [`../implementation-plan.md`](../implementation-plan.md) | Locked decisions, rationale, risk register, timeline — *what we build & why* |
+| [`../handoff-2026-08-26-session2.md`](../handoff-2026-08-26-session2.md) | Session log: Gate 2 resolution (ReID rejected, TrackTrack shipped) + sample-clip hunt (2026-08-26) |
 | [`../handoff-2026-08-26.md`](../handoff-2026-08-26.md) | Session log from the Phase 2 completion session (2026-08-26) |
 | [`../handoff-2026-08-24.md`](../handoff-2026-08-24.md) | Session log from the planning session (2026-08-24) |
 
