@@ -32,7 +32,7 @@ Standing rules:
 | 0 | Scaffold & Environment | compose up → MQTT→Kafka round-trip; CI green | ✅ Locally passed 2026-08-25 (CI activates on first push) |
 | 1 | Video Ingestion | 60 min RTSP < 200 ms lag; auto-reconnect < 15 s | ✅ Passed 2026-08-25 (max lag 148 ms; kill detected 0.0 s) |
 | 2 | Detection + Tracking | stable IDs through occlusions; ≥ 15 FPS | 🟡 Executed 2026-08-26 — FPS ✅ (57/44); ID metric 0.741 vs 0.80 → [owner decision pending](./phase-2-completion.md#8-gate-decision--options-for-owner) |
-| 3 | Zones / Occupancy / Door | occupancy ±10% vs manual; 0 FP on empty-zone footage | 🟡 In progress — Steps 3.1–3.4 done 2026-08-26 (typed zones + ZoneEngine; occupancy + hysteresis; DwellTracker loiter/door, 50 unit tests) |
+| 3 | Zones / Occupancy / Door | occupancy ±10% vs manual; 0 FP on empty-zone footage | 🟡 In progress — Steps 3.1–3.4 + wiring done 2026-08-26 (typed zones, ZoneEngine, occupancy+hysteresis, DwellTracker, engine+JSONL sink wired e2e; 59 unit tests) |
 | 4 | Fall Detection | ≥ 90% UR Fall; < 2 FP/hr | ☐ Not started |
 | 5 | Altercation Detection | ≥ 85% fight clips; 0 alerts on 30 min normal footage | ☐ Not started |
 | 6 | Event Engine + Severity | golden-file tests pass | ☐ Not started |
