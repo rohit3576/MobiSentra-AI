@@ -56,8 +56,13 @@ def draw_background(frame: np.ndarray, rng: random.Random, theme: dict) -> None:
     for _ in range(6):
         x = rng.randrange(0, w - 120)
         y = rng.randrange(0, max(1, h - 160))
-        cv2.rectangle(frame, (x, y), (x + rng.randrange(60, 120), y + rng.randrange(40, 90)),
-                      theme["fixture"], -1)
+        cv2.rectangle(
+            frame,
+            (x, y),
+            (x + rng.randrange(60, 120), y + rng.randrange(40, 90)),
+            theme["fixture"],
+            -1,
+        )
     for y in range(0, h, 90):
         cv2.line(frame, (0, y), (w, y), theme["fixture"], 1)
 
@@ -84,8 +89,9 @@ def make_clip(path: Path, size: tuple[int, int], fps: float, seconds: int, theme
         frame = background.copy()
         for m in movers:
             m.step((w, h))
-            cv2.rectangle(frame, (int(m.x), int(m.y)),
-                          (int(m.x) + m.w, int(m.y) + m.h), theme["people"], -1)
+            cv2.rectangle(
+                frame, (int(m.x), int(m.y)), (int(m.x) + m.w, int(m.y) + m.h), theme["people"], -1
+            )
         writer.write(frame)
     writer.release()
 

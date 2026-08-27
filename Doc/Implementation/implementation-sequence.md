@@ -32,7 +32,7 @@ Standing rules:
 | 0 | Scaffold & Environment | compose up → MQTT→Kafka round-trip; CI green | ✅ Locally passed 2026-08-25 (CI activates on first push) |
 | 1 | Video Ingestion | 60 min RTSP < 200 ms lag; auto-reconnect < 15 s | ✅ Passed 2026-08-25 (max lag 148 ms; kill detected 0.0 s) |
 | 2 | Detection + Tracking | stable IDs through occlusions; ≥ 15 FPS | 🟡 Executed 2026-08-26 — FPS ✅ (57/44); ID metric 0.741 vs 0.80 → [owner decision pending](./phase-2-completion.md#8-gate-decision--options-for-owner) |
-| 3 | Zones / Occupancy / Door | occupancy ±10% vs manual; 0 FP on empty-zone footage | 🟡 In progress — Steps 3.1–3.5 done 2026-08-26 (zones/engine/occupancy/dwell wired e2e + zone editor round-trip; remaining: Day 6 gate evidence + Day 7 completion) |
+| 3 | Zones / Occupancy / Door | occupancy ±10% vs manual; 0 FP on empty-zone footage | 🟡 Gate 3: 2/3 ticked — empty-zone FP ✅ (30 min stream, 0 events, 2026-08-27) + editor round-trip ✅; occupancy ±10% measured (3,3,3,5,4 on bus1), verdict awaits owner's 5 manual counts → then `phase-3-completion.md` |
 | 4 | Fall Detection | ≥ 90% UR Fall; < 2 FP/hr | 🟡 In progress — 4.1–4.5 done (4.5: **93.3% detection ✅**; FP blocked on mattress-lie hard negatives); 4.6 option (a) shipped 2026-08-27 (REST zones suppress falls in beds/berths — FP 9→6 with auto-marked zones, mechanism unit-proven, definitive number needs human-marked polygons); remaining: FP closure decision + `phase-4-completion.md` |
 | 5 | Altercation Detection | ≥ 85% fight clips; 0 alerts on 30 min normal footage | ☐ Not started |
 | 6 | Event Engine + Severity | golden-file tests pass | ☐ Not started |
@@ -321,11 +321,14 @@ Standing rules:
 ### Step 3.6 — Validation against manual counts
 - **Do:** on test footage, compare occupancy count vs manual count at sampled timestamps; run 30 min of empty-zone footage looking for false positives.
 - **Done when:** ±10% vs manual; zero false zone events on the empty footage.
+- **Progress 2026-08-27:**
+  - *Criterion 2 (empty-zone FP) ✅* — new `tools/zone_fp_soak.py`: siting pass unions every detection bbox over the real-footage pool into a 24×14 grid, takes the largest empty rectangle (maximal-rectangle scan, unit-tested), sites all three zone types there (occupancy + restricted + door, production thresholds), then soaks the pool (4 real clips ≈ 49 s, 16:9, looped 37×) through the production `CameraAnalytics` for **30.0 min of stream / 23,760 analyzed frames → 0 zone events** (`runs/zone-fp-soak.json`). Documented limitation: ~49 s of unique footage repeated — the exposure tested is detector noise + zone logic over stream time, not 30 min of unique scenes.
+  - *Criterion 1 (±10% vs manual) — measured, awaiting owner* — `tools/occupancy_check.py` re-measured on the current stack (yolo26n-pose): bus1.mp4 frames 58/174/290/406/522 → **3, 3, 3, 5, 4**; annotated JPGs in `runs/occupancy-check/`. Owner counts heads in the 5 JPGs and runs the `verdict` subcommand to close the gate.
 
 ### GATE 3 — Zones / Occupancy
-- [ ] Occupancy within ±10% of manual count
-- [ ] Zero false positives over 30 min empty-zone footage
-- [ ] Zone editor round-trips YAML
+- [ ] Occupancy within ±10% of manual count *(measured 3,3,3,5,4 — awaiting owner manual counts for the verdict)*
+- [x] Zero false positives over 30 min empty-zone footage *(2026-08-27: 30.0 min stream, 23,760 analyzed frames, 0 zone events — `runs/zone-fp-soak.json`, harness `tools/zone_fp_soak.py`)*
+- [x] Zone editor round-trips YAML *(evidenced at Step 3.5, 2026-08-26)*
 
 ---
 

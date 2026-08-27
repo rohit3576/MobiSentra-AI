@@ -16,9 +16,7 @@ import time
 from pathlib import Path
 
 
-def bench_resolution(
-    video: Path, seconds: float, process
-) -> dict:
+def bench_resolution(video: Path, seconds: float, process) -> dict:
     import cv2
 
     cap = cv2.VideoCapture(str(video))
@@ -43,16 +41,20 @@ def bench_resolution(
             frames += 1
             elapsed = time.monotonic() - started
             if elapsed >= seconds:
-                return {"seconds": round(elapsed, 2), "frames": frames,
-                        "fps": round(frames / elapsed, 2)}
+                return {
+                    "seconds": round(elapsed, 2),
+                    "frames": frames,
+                    "fps": round(frames / elapsed, 2),
+                }
     finally:
         cap.release()
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--video", type=Path,
-                        default=Path("sample_data/videos/bus_interior_01.mp4"))
+    parser.add_argument(
+        "--video", type=Path, default=Path("sample_data/videos/bus_interior_01.mp4")
+    )
     parser.add_argument("--seconds", type=float, default=30.0)
     parser.add_argument("--resolutions", nargs="+", default=["1280x720", "1920x1080"])
     parser.add_argument("--model", default="yolo26n.pt")
@@ -65,8 +67,12 @@ def main() -> None:
 
     device = resolve_device("auto")
     print(f"[bench] model={args.model} device={device} video={args.video.name}")
-    results = {"model": args.model, "device": device, "sustained_seconds": args.seconds,
-               "resolutions": {}}
+    results = {
+        "model": args.model,
+        "device": device,
+        "sustained_seconds": args.seconds,
+        "resolutions": {},
+    }
     for res in args.resolutions:
         w, h = (int(v) for v in res.split("x"))
         detector = DetectorTracker(
@@ -82,8 +88,9 @@ def main() -> None:
 
         stats = bench_resolution(args.video, args.seconds, process)
         results["resolutions"][res] = stats
-        print(f"[bench] {res}: {stats['fps']} fps over {stats['seconds']}s "
-              f"({stats['frames']} frames)")
+        print(
+            f"[bench] {res}: {stats['fps']} fps over {stats['seconds']}s ({stats['frames']} frames)"
+        )
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(results, indent=2) + "\n")

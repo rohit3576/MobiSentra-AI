@@ -102,8 +102,9 @@ def frames_around(anchor_frames: list[int], last_frame: int, pad: int = 3) -> li
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--video", type=Path,
-                        default=EDGE / "sample_data" / "videos" / "crowd_real_01.mp4")
+    parser.add_argument(
+        "--video", type=Path, default=EDGE / "sample_data" / "videos" / "crowd_real_01.mp4"
+    )
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--conf", type=float, default=0.3)
     parser.add_argument("--model", default="yolo26n.pt")
@@ -135,17 +136,19 @@ def main() -> None:
         if not ok:
             break
         for p in detector.process_frame(image):
-            track_samples.setdefault(p.track_id, []).append(
-                Sample(frame=frame_idx, bbox=p.bbox)
-            )
+            track_samples.setdefault(p.track_id, []).append(Sample(frame=frame_idx, bbox=p.bbox))
             x1, y1, x2, y2 = (int(v) for v in p.bbox)
             cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(
-                image, f"#{p.track_id}", (x1, max(12, y1 - 6)),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2,
+                image,
+                f"#{p.track_id}",
+                (x1, max(12, y1 - 6)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (0, 255, 0),
+                2,
             )
-        cv2.imwrite(str(spool / f"f{frame_idx:05d}.jpg"), image,
-                    [cv2.IMWRITE_JPEG_QUALITY, 80])
+        cv2.imwrite(str(spool / f"f{frame_idx:05d}.jpg"), image, [cv2.IMWRITE_JPEG_QUALITY, 80])
         frame_idx += 1
         if frame_idx % 150 == 0:
             print(f"  …frame {frame_idx}")

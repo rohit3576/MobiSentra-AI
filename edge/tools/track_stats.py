@@ -127,9 +127,7 @@ def scan_clip(
         if not ok:
             break
         for p in process(image):
-            track_samples.setdefault(p.track_id, []).append(
-                Sample(frame=frame_idx, bbox=p.bbox)
-            )
+            track_samples.setdefault(p.track_id, []).append(Sample(frame=frame_idx, bbox=p.bbox))
         frame_idx += 1
         if progress_every and frame_idx % progress_every == 0:
             print(f"  …frame {frame_idx}")
@@ -141,8 +139,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--video", type=Path, required=True)
     parser.add_argument("--conf", type=float, default=0.3)
-    parser.add_argument("--track-buffer", type=int, default=None,
-                        help="override track_buffer (default: keep the yaml's value)")
+    parser.add_argument(
+        "--track-buffer",
+        type=int,
+        default=None,
+        help="override track_buffer (default: keep the yaml's value)",
+    )
     parser.add_argument("--tracker", default="bytetrack.yaml")
     parser.add_argument("--model", default="yolo26n.pt")
     parser.add_argument("--imgsz", type=int, default=640)
@@ -159,20 +161,28 @@ def main() -> None:
         track_buffer=args.track_buffer,
         imgsz=args.imgsz,
     )
-    print(f"[track_stats] {args.video.name} conf={args.conf} "
-          f"tracker={args.tracker} buffer={args.track_buffer}")
+    print(
+        f"[track_stats] {args.video.name} conf={args.conf} "
+        f"tracker={args.tracker} buffer={args.track_buffer}"
+    )
     track_samples, fps = scan_clip(args.video, detector.process_frame)
     report = compute_fragmentation(track_samples, fps, args.min_lifetime)
     reassociations = count_reassociations(track_samples)
 
     verdict = "PASS" if report.stable_ratio_flicker_filtered >= 0.80 else "FAIL"
-    print(f"[track_stats] stable_ratio={report.stable_ratio:.3f} "
-          f"flicker_filtered={report.stable_ratio_flicker_filtered:.3f} "
-          f"({verdict}, gate >= 0.80 on flicker-filtered)")
-    print(f"[track_stats] person_seconds={report.person_seconds:.1f} "
-          f"tracks={report.n_tracks} stable={report.n_stable_tracks}")
-    print(f"[track_stats] suspected_reassociations={reassociations} "
-          f"(ID fragmentations: track ends, new track starts same place <=1.5s)")
+    print(
+        f"[track_stats] stable_ratio={report.stable_ratio:.3f} "
+        f"flicker_filtered={report.stable_ratio_flicker_filtered:.3f} "
+        f"({verdict}, gate >= 0.80 on flicker-filtered)"
+    )
+    print(
+        f"[track_stats] person_seconds={report.person_seconds:.1f} "
+        f"tracks={report.n_tracks} stable={report.n_stable_tracks}"
+    )
+    print(
+        f"[track_stats] suspected_reassociations={reassociations} "
+        f"(ID fragmentations: track ends, new track starts same place <=1.5s)"
+    )
     print(f"[track_stats] lifetimes: {report.lifetime_histogram}")
 
 
