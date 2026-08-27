@@ -7,6 +7,7 @@ Execution runbooks for building MobiSentra AI, in strict sequence.
 | Doc | Role |
 |---|---|
 | [`implementation-sequence.md`](./implementation-sequence.md) | **THE runbook** — every step in execution order, with commands, files, and gates. Start here. |
+| [`phase-4-plan.md`](./phase-4-plan.md) | Phase 4 (fall detection) design plan — retroactive draft (4.3), owner review pending |
 | [`phase-3-plan.md`](./phase-3-plan.md) | Phase 3 (zones/occupancy/door) design plan — **DRAFT, awaiting approval** |
 | [`phase-2-completion.md`](./phase-2-completion.md) | Phase 2 completion report — gate evidence, A/B tables, pending owner checklist/decision |
 | [`phase-2-plan.md`](./phase-2-plan.md) | Phase 2 (detection + tracking) design plan — approved & executed |

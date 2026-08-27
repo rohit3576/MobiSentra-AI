@@ -97,6 +97,24 @@ def _hip_velocity(samples: Sequence[PoseSample]) -> float | None:
     return (last[1] - prev[1]) / dt
 
 
+def head_hip_vertical_offset(sample: PoseSample) -> float | None:
+    """|head_y − hip_y| / bbox height — "head near hip level" (0 = level).
+
+    Distinct from head_hip_distance: the Euclidean distance normalized by a
+    bbox that collapses when lying is not discriminative; the vertical
+    offset is (standing ≈ 0.6, lying ≈ 0).
+    """
+    head = _head_point(sample)
+    hips = _pair_midpoint(
+        sample.keypoints[KeypointIndex.LEFT_HIP], sample.keypoints[KeypointIndex.RIGHT_HIP]
+    )
+    if head is None or hips is None:
+        return None
+    _, y1, _, y2 = sample.bbox
+    height = y2 - y1
+    return abs(head[1] - hips[1]) / height if height > 0.0 else None
+
+
 def compute_fall_features(samples: Sequence[PoseSample]) -> FallFeatures:
     """Derive fall features at the latest sample of a keypoint history."""
     if not samples:

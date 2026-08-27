@@ -140,3 +140,29 @@ def test_missing_head_degrades_distance_only():
 
 def test_min_conf_constant_is_sane():
     assert 0.0 < KEYPOINT_MIN_CONF < 0.9
+
+
+# ── head_hip_vertical_offset (Step 4.3 rule input) ─────────────────────────
+
+from mobisentra.analytics.fall_features import head_hip_vertical_offset  # noqa: E402
+
+
+def test_head_hip_vertical_offset_standing():
+    offset = head_hip_vertical_offset(pose_at(1.0, STANDING_BBOX, skeleton()))
+    assert offset == pytest.approx(90.0 / 150.0)
+
+
+def test_head_hip_vertical_offset_lying_is_near_zero():
+    offset = head_hip_vertical_offset(pose_at(1.0, LYING_BBOX, skeleton(**LYING)))
+    assert offset is not None
+    assert offset < 0.15
+
+
+def test_head_hip_vertical_offset_occluded_is_none():
+    occluded = skeleton(lh=(0.0, 0.0, 0.05), rh=(0.0, 0.0, 0.1),
+                        nose=(0.0, 0.0, 0.05))
+    assert head_hip_vertical_offset(pose_at(1.0, STANDING_BBOX, occluded)) is None
+
+
+def test_head_hip_vertical_offset_degenerate_bbox_is_none():
+    assert head_hip_vertical_offset(pose_at(1.0, (0.0, 50.0, 80.0, 50.0), skeleton())) is None
