@@ -1,4 +1,4 @@
-"""Camera analytics composition (Phase 3 Day 4 + Phase 4 Step 4.4 wiring).
+"""Camera analytics composition (Phase 3 Day 4 + Phase 4 wiring).
 
 Bundles the analytics pieces behind one per-camera object:
 ``ZoneEngine`` membership → ``OccupancyMonitor`` bands (emit
@@ -6,7 +6,9 @@ Bundles the analytics pieces behind one per-camera object:
 in is not an event) + ``DwellTracker`` loiter/obstruction events, and —
 when a track history is injected (pose model attached) — the ``FallDetector``
 cascade with ``EvidenceBuffer``/``EvidenceWriter`` so every ``fall_detected``
-row carries a playable ``evidence_ref`` clip. ``process`` returns
+row carries a playable ``evidence_ref`` clip. Tracks inside a REST zone
+(beds/berths — lying expected) are excluded from the fall cascade: a
+deliberate lie-down there is not a fall event. ``process`` returns
 JSONL-ready rows; ``draw_overlay`` renders zone boundaries for
 ``--preview``.
 """
@@ -34,6 +36,7 @@ ZONE_COLORS: Final[dict[ZoneType, tuple[int, int, int]]] = {
     ZoneType.OCCUPANCY: (255, 160, 0),
     ZoneType.RESTRICTED: (0, 0, 255),
     ZoneType.DOOR: (0, 200, 255),
+    ZoneType.REST: (160, 0, 160),
 }
 
 
@@ -108,16 +111,30 @@ class CameraAnalytics:
                 row["door_state"] = event.door_state
             rows.append(row)
         if self._fall is not None and self._history is not None:
-            self._evidence_buffer.push(ts, frame)
-            rows.extend(self._fall_rows(ts))
+            rest_tracks = self._rest_tracks(membership)
+            if self._evidence_writer is not None:
+                self._evidence_buffer.push(ts, frame)
+            rows.extend(self._fall_rows(ts, rest_tracks))
         return rows
 
-    def _fall_rows(self, now_ts: float) -> list[EventRow]:
+    def _rest_tracks(self, membership: dict[str, set[int]]) -> set[int]:
+        """Track IDs inside a rest zone this frame — lying is expected there
+        (beds/berths), so the fall cascade is suppressed for them (UR Fall
+        hard-negative mitigation, option a, 2026-08-27)."""
+        suppressed: set[int] = set()
+        for name, zone in self._zones.items():
+            if zone.zone_type is ZoneType.REST:
+                suppressed |= membership.get(name, set())
+        return suppressed
+
+    def _fall_rows(self, now_ts: float, suppressed: set[int]) -> list[EventRow]:
         pose_map = {
             track_id: self._history.pose_history(track_id) for track_id in self._history.track_ids()
         }
         rows: list[EventRow] = []
         for track_id, samples in pose_map.items():
+            if track_id in suppressed:
+                continue
             others = {
                 other_id: other for other_id, other in pose_map.items() if other_id != track_id
             }
@@ -125,6 +142,10 @@ class CameraAnalytics:
             for candidate in candidates:
                 rows.append(self._fall_row(candidate, track_id))
         return rows
+
+    def pending_fall_track_ids(self) -> list[int]:
+        """Tracks mid-cascade (benchmark telemetry)."""
+        return [] if self._fall is None else self._fall.pending_track_ids()
 
     def _fall_row(self, candidate: FallCandidate, track_id: int) -> EventRow:
         row = EventRow(

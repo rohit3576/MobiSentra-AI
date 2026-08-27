@@ -92,12 +92,44 @@ Paths forward (4.6 fork, runbook-sanctioned):
 2. Phase 6 debouncing/severity absorbs the residual rate (events ≠ alerts).
 3. Temporal classifier (4.6's escalation): only if 1+2 under-measure.
 
+## Step 4.6 — option (a) executed: REST zones as fall semantic filter (2026-08-27)
+
+**Mechanism (production wiring, unit-tested):** new `ZoneType.REST`
+(`type: rest` in camera YAML) — a bed/berth polygon where lying is
+expected. `CameraAnalytics` excludes tracks with feet inside a REST zone
+from the fall cascade (trigger suppressed; a post-trigger entry into the
+zone freezes the confirm window — no fire). REST zones are inert for
+occupancy and dwell logic. Zone editor picks the type up automatically.
+
+**Benchmark emulation of operator bed-marking** (`--rest-zones derive` on
+`tools/fall_benchmark.py`): pass 1 marks each ADL clip's mattress
+(median down-position, bbox-bottom anchor — the same anchor membership
+tests; zone extends 0.35 up / 0.15 down / 0.25 sideways); a clip that
+still false-fires gets one alert-marked replay (zone at the false alert's
+trigger spot — the commissioning loop). Falls never get zones (their
+lying spots are floors, not beds).
+
+| Mode | ADL FP events | Falls |
+|---|---|---|
+| no zones (raw cascade) | 9 (5 footage + 4 settle) | 28/30 = 93.3% |
+| derive + alert-mark | **6 (3 footage + 3 settle)** | 28/30 = 93.3% (unchanged — zero false suppression) |
+
+**Honest finding — the gap is annotation, not mechanism:** three
+alert-marked clips still fired on replay. Two structural reasons: (1)
+mattress lies TRIGGER mid-descent while the feet are still outside the
+marked zone (person stands beside the mattress, descends onto it), and
+(2) pose jitter moves the auto-marked zone vs the replay's geometry by
+~0.1 normalized. An operator marking the real mattress polygon once
+(generous, stable, human-accurate) closes both — the UR Fall emulation
+cannot, without human annotation of the 40 ADL frames. Unit tests prove
+the mechanism itself: a fall inside a REST zone is suppressed; the same
+fall with the zone elsewhere fires with evidence.
+
 ## Step 4.6 — status
 
-In progress (folded into the 4.5 iteration above): five trigger/recovery
-iterations driven by per-clip failure analysis. Remaining work: apply the
-zones-semantic-filter prototype, re-run FP measurement, then close Phase 4
-with `phase-4-completion.md`.
+Option (a) shipped. Remaining for Phase 4 close: optionally human-annotate
+UR Fall mattress polygons for a definitive FP number (or accept the
+documented emulation limit), then `phase-4-completion.md`.
 
 ## Risks
 

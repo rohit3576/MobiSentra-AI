@@ -26,6 +26,16 @@ def _registry(zone_yaml: str) -> str:
 TRIANGLE = "[[0.1, 0.1], [0.9, 0.1], [0.9, 0.9]]"
 
 
+def test_parses_rest_zone_without_capacity(tmp_path):
+    file = tmp_path / "cameras.yaml"
+    file.write_text(_registry(f"      bed:\n        type: rest\n        polygon: {TRIANGLE}\n"))
+
+    zone = load_cameras(file)[0].zones["bed"]
+
+    assert zone.zone_type is ZoneType.REST
+    assert zone.max_capacity is None
+
+
 def test_parses_all_three_zone_types(tmp_path):
     registry = _registry(
         "      occ:\n"

@@ -24,7 +24,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
 
-import av
 import cv2
 import numpy as np
 
@@ -149,6 +148,10 @@ class EvidenceWriter:
 
         clip = camera_dir / f"{stem}.mp4"
         height, width = frames[0][1].shape[:2]
+        # Deliberately deferred: cv2 + PyAV co-load registers duplicate
+        # avdevice dylibs that can hard-crash the process (2026-08-27).
+        import av
+
         container = av.open(str(clip), mode="w", options={"movflags": "+faststart"})
         try:
             stream = container.add_stream("libx264", rate=fps)

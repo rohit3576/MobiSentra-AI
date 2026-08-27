@@ -87,6 +87,8 @@ class DwellTracker:
                     )
                 case ZoneType.OCCUPANCY:
                     pass  # OccupancyMonitor's domain (Step 3.2)
+                case ZoneType.REST:
+                    pass  # fall-cascade suppression context (Phase 4.6), not dwell
                 case unreachable:
                     assert_never(unreachable)
         self._dwell: dict[tuple[str, int], _TrackDwell] = {}

@@ -25,6 +25,7 @@ class ZoneType(StrEnum):
     OCCUPANCY = "occupancy"
     RESTRICTED = "restricted"
     DOOR = "door"
+    REST = "rest"
 
 
 @dataclass(frozen=True)

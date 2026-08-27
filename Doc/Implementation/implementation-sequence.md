@@ -33,7 +33,7 @@ Standing rules:
 | 1 | Video Ingestion | 60 min RTSP < 200 ms lag; auto-reconnect < 15 s | ✅ Passed 2026-08-25 (max lag 148 ms; kill detected 0.0 s) |
 | 2 | Detection + Tracking | stable IDs through occlusions; ≥ 15 FPS | 🟡 Executed 2026-08-26 — FPS ✅ (57/44); ID metric 0.741 vs 0.80 → [owner decision pending](./phase-2-completion.md#8-gate-decision--options-for-owner) |
 | 3 | Zones / Occupancy / Door | occupancy ±10% vs manual; 0 FP on empty-zone footage | 🟡 In progress — Steps 3.1–3.5 done 2026-08-26 (zones/engine/occupancy/dwell wired e2e + zone editor round-trip; remaining: Day 6 gate evidence + Day 7 completion) |
-| 4 | Fall Detection | ≥ 90% UR Fall; < 2 FP/hr | 🟡 In progress — 4.1–4.4 done (4.4: evidence clips e2e + ID-switch tolerance); 4.5 done 2026-08-27: **93.3% UR Fall detection ✅**, FP blocked on mattress-lie hard negatives (owner decision in phase-4-plan.md); 4.6 fold: zones-semantic-filter + completion report remain |
+| 4 | Fall Detection | ≥ 90% UR Fall; < 2 FP/hr | 🟡 In progress — 4.1–4.5 done (4.5: **93.3% detection ✅**; FP blocked on mattress-lie hard negatives); 4.6 option (a) shipped 2026-08-27 (REST zones suppress falls in beds/berths — FP 9→6 with auto-marked zones, mechanism unit-proven, definitive number needs human-marked polygons); remaining: FP closure decision + `phase-4-completion.md` |
 | 5 | Altercation Detection | ≥ 85% fight clips; 0 alerts on 30 min normal footage | ☐ Not started |
 | 6 | Event Engine + Severity | golden-file tests pass | ☐ Not started |
 | 7 | Edge Messaging | 10-min blackout → zero loss, zero dupes | ☐ Not started |

@@ -15,16 +15,20 @@ import numpy as np
 from test_fall import FALLEN, GROUND_BBOX, STANDING, STANDING_BBOX, at
 
 from mobisentra.analytics.engine import CameraAnalytics
-from mobisentra.ingestion.config import CameraConfig
+from mobisentra.ingestion.config import CameraConfig, ZoneConfig, ZoneType
 from mobisentra.pipeline import CameraAccumulator, run_frame
 from mobisentra.vision.pose import TrackedPose
 from mobisentra.vision.track_history import TrackHistory
 
-FRAME = np.full((100, 200, 3), 40, dtype=np.uint8)
+FRAME = np.full((200, 300, 3), 40, dtype=np.uint8)
+REST_ZONE_AROUND_PERSON = ((0.2, 0.6), (0.55, 0.6), (0.55, 1.0), (0.2, 1.0))
+REST_ZONE_ELSEWHERE = ((0.8, 0.0), (1.0, 0.0), (1.0, 0.2), (0.8, 0.2))
 
 
-def make_camera() -> CameraConfig:
-    return CameraConfig(id="CAM_FALL", source="sample://videos/f.mp4", vehicle_id="V")
+def make_camera(zones: dict | None = None) -> CameraConfig:
+    return CameraConfig(
+        id="CAM_FALL", source="sample://videos/f.mp4", vehicle_id="V", zones=zones or {}
+    )
 
 
 def sample_to_pose(sample) -> TrackedPose:
@@ -130,6 +134,42 @@ class FrameStub:
         self.capture_ts = ts
         self.frame_index = int(ts * 10)
         self.image = FRAME
+
+
+def test_fall_inside_rest_zone_is_suppressed(tmp_path: Path):
+    """UR Fall hard-negative mitigation (option a, 2026-08-27): a rest zone
+    (bed/berth — lying is expected there) suppresses the fall cascade for
+    tracks inside it; a deliberate mattress lie must not fire."""
+    history = TrackHistory()
+    analytics = CameraAnalytics(
+        make_camera(
+            {
+                "bed": ZoneConfig(
+                    name="bed", zone_type=ZoneType.REST, polygon=REST_ZONE_AROUND_PERSON
+                )
+            }
+        ),
+        history=history,
+        evidence_root=tmp_path,
+    )
+    rows = feed_through_engine(analytics, history, FALL_SCRIPT)
+    assert [row for row in rows if row["kind"] == "fall_detected"] == []
+    assert not list(tmp_path.rglob("*.mp4"))
+
+
+def test_fall_outside_rest_zone_still_fires(tmp_path: Path):
+    history = TrackHistory()
+    analytics = CameraAnalytics(
+        make_camera(
+            {"bed": ZoneConfig(name="bed", zone_type=ZoneType.REST, polygon=REST_ZONE_ELSEWHERE)}
+        ),
+        history=history,
+        evidence_root=tmp_path,
+    )
+    rows = feed_through_engine(analytics, history, FALL_SCRIPT)
+    falls = [row for row in rows if row["kind"] == "fall_detected"]
+    assert len(falls) == 1
+    assert Path(falls[0]["evidence_ref"]).is_file()
 
 
 def test_run_frame_pose_branch_feeds_keypoint_history():
