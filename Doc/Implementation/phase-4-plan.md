@@ -131,6 +131,22 @@ Option (a) shipped. Remaining for Phase 4 close: optionally human-annotate
 UR Fall mattress polygons for a definitive FP number (or accept the
 documented emulation limit), then `phase-4-completion.md`.
 
+**Option A procedure (owner, ~30–45 min, needs a display):**
+
+```bash
+cd edge
+.venv/bin/python tools/rest_zone_annotator.py            # click mattress corners per ADL clip
+#   n=save+next  s=no-zone  u=undo  q=quit; resumes where you left off
+.venv/bin/python tools/fall_benchmark.py --rest-zones file:../mlops/datasets/ur_fall/rest-zones-manual.json \
+    --json ../mlops/datasets/ur_fall/bench-manual.json
+```
+
+The annotator opens each ADL clip at its lying moment (pose-located; add
+`--no-pose` for the 80%%-frame if startup is slow). The benchmark then
+measures FP with the human-marked zones — the definitive Gate-4 number.
+Falls never receive zones (their lying spots are floors), so detection
+must stay 28/30; any drop would be false suppression to investigate.
+
 ## Risks
 
 | Risk | Mitigation |

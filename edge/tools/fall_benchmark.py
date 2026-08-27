@@ -265,9 +265,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--velocity-high", type=float, default=2.0)
     parser.add_argument(
         "--rest-zones",
-        choices=("off", "derive"),
         default="off",
-        help="derive: emulate operator bed-marking per ADL clip (pass-1 mattress localization)",
+        help="derive: auto-mark per ADL clip (pass-1 localization + alert retry); "
+        "file:PATH: human-annotated polygons from tools/rest_zone_annotator.py",
     )
     parser.add_argument("--split", choices=("all", "falls", "adl"), default="all")
     parser.add_argument("--limit", type=int, default=0)
@@ -291,12 +291,22 @@ def main(argv: list[str] | None = None) -> int:
         track_buffer=90,
     )
 
+    manual_zones: dict[str, list] = {}
+    if args.rest_zones.startswith("file:"):
+        manual_zones = json.loads(Path(args.rest_zones[len("file:") :]).read_text())
+        print(f"[bench] {len(manual_zones)} manual rest-zone entries loaded")
+
     results: list[ClipResult] = []
     started = time.monotonic()
     for clip in clips:
         rest_zone = None
         zone_origin = None
-        if args.rest_zones == "derive" and "adl-" in clip.stem:
+        if args.rest_zones.startswith("file:") and clip.stem in manual_zones:
+            polygon = manual_zones[clip.stem]
+            if polygon:
+                rest_zone = tuple(tuple(point) for point in polygon)
+                zone_origin = "manual"
+        elif args.rest_zones == "derive" and "adl-" in clip.stem:
             rest_zone = derive_rest_zone(clip, tracker)
             zone_origin = "derived" if rest_zone else None
         trace = bool(args.trace) and args.trace in clip.stem
@@ -325,6 +335,7 @@ def main(argv: list[str] | None = None) -> int:
     footage_hours = sum(r.duration_s for r in adls) / 3600.0
     zoned = sum(1 for r in adls if r.rest_zone is not None)
     zoned_alert = sum(1 for r in adls if r.zone_origin == "alert")
+    zoned_manual = sum(1 for r in adls if r.zone_origin == "manual")
 
     print(
         f"\n=== UR Fall benchmark (confirm={args.confirm}s, settle={args.settle}s, "
@@ -335,7 +346,7 @@ def main(argv: list[str] | None = None) -> int:
         f"trigger-only={triggered_only}  missed={missed}"
     )
     print(
-        f"adl:   {len(adls)} (zoned: {zoned}, alert-marked: {zoned_alert})"
+        f"adl:   {len(adls)} (zoned: {zoned} = manual {zoned_manual} / alert {zoned_alert})"
         f"  fp_in_footage={fp_footage}  fp_settle_only={fp_settle}  "
         f"footage={footage_hours * 60:.1f}min"
     )
