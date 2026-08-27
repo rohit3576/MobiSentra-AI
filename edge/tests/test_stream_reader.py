@@ -133,9 +133,7 @@ def test_open_failure_backoff_then_success(fake_clock):
             return capture
         return FakeCapture(frames=3, fps=1000.0)
 
-    reader = make_reader(
-        PACED, factory, clock=fake_clock, backoff_initial_s=1.0, backoff_max_s=4.0
-    )
+    reader = make_reader(PACED, factory, clock=fake_clock, backoff_initial_s=1.0, backoff_max_s=4.0)
     reader.start()
     try:
         assert wait_until(lambda: reader.status().state == "UP")

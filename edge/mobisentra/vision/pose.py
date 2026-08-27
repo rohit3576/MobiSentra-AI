@@ -97,5 +97,7 @@ def postprocess_pose_results(result, tracked_classes: list[int] | None) -> list[
 class PoseTracker(DetectorTracker):
     """DetectorTracker with pose postprocessing — same config, same tracker."""
 
+    produces_pose: bool = True
+
     def _postprocess(self, result) -> list[TrackedPose]:
         return postprocess_pose_results(result, tracked_classes=self._classes)

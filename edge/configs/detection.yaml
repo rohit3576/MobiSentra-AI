@@ -1,7 +1,9 @@
-# MobiSentra detection + tracking configuration (Phase 2).
-# Model is a config value — fallback path is yolo11n.pt (one-line change).
+# MobiSentra detection + tracking configuration (Phase 2; pose since Phase 4).
+# Model is a config value — fallback path is yolo11n-pose.pt (one-line change).
+# A "-pose" model routes through PoseTracker (COCO-17 keypoints + track ids,
+# the fall-cascade input); plain detect models keep zones/occupancy but no fall.
 
-model: yolo26n.pt
+model: yolo26n-pose.pt
 device: auto            # auto (CUDA -> MPS -> CPU) | cpu | mps | cuda | 0
 conf: 0.3               # detection confidence threshold
 classes: [0]            # COCO class 0 = person (others logged, not tracked)

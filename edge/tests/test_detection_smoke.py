@@ -62,8 +62,7 @@ def test_persons_detected_and_ids_persist(detector, frames):
     assert avg >= 1.0, f"expected people in crowd clip, avg={avg}"
 
     stable_frames = sum(
-        1 for i in range(1, len(ids_by_frame))
-        if ids_by_frame[i] & ids_by_frame[i - 1]
+        1 for i in range(1, len(ids_by_frame)) if ids_by_frame[i] & ids_by_frame[i - 1]
     )
     assert stable_frames >= len(ids_by_frame) * 0.6, (
         f"track IDs not persisting across frames: {stable_frames}/{len(ids_by_frame) - 1}"

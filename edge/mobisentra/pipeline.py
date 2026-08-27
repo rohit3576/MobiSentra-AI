@@ -41,18 +41,22 @@ class StreamStatsSnapshot:
 
 
 def attach_detection(accs: list[CameraAccumulator], det_cfg: dict, debug: bool) -> None:
+    from mobisentra.vision.pose import PoseTracker
     from mobisentra.vision.track_history import TrackHistory
     from mobisentra.vision.tracker import DetectorTracker, resolve_device
 
+    model = str(det_cfg.get("model", ""))
+    detector_cls = PoseTracker if "-pose" in model else DetectorTracker
     print(
-        f"[main] detection: model={det_cfg.get('model')} "
-        f"device={resolve_device(det_cfg.get('device', 'auto'))}"
+        f"[main] detection: model={model} "
+        f"device={resolve_device(det_cfg.get('device', 'auto'))} "
+        f"pose={'on' if detector_cls is PoseTracker else 'off'}"
     )
     debug_dir = Path("runs/debug") if debug else None
     if debug_dir is not None:
         debug_dir.mkdir(parents=True, exist_ok=True)
     for acc in accs:
-        acc.detector = DetectorTracker(**det_cfg)
+        acc.detector = detector_cls(**det_cfg)
         acc.history = TrackHistory()
         if debug_dir is not None:
             acc.debug_sink = (debug_dir / f"{acc.camera.id}.jsonl").open("w")
@@ -63,19 +67,33 @@ def attach_analytics(accs: list[CameraAccumulator]) -> None:
     from mobisentra.events.sink import JsonlEventWriter
 
     events_dir = Path("runs/events")
-    zoned = [acc for acc in accs if acc.camera.zones]
-    for acc in zoned:
-        acc.analytics = CameraAnalytics(acc.camera)
+    evidence_dir = Path("runs/evidence")
+    for acc in accs:
+        acc.analytics = CameraAnalytics(acc.camera, history=acc.history, evidence_root=evidence_dir)
         acc.event_sink = JsonlEventWriter(events_dir / f"{acc.camera.id}.jsonl")
-    if zoned:
-        summary = ", ".join(f"{acc.camera.id} ({len(acc.camera.zones)} zone(s))" for acc in zoned)
-        print(f"[main] analytics: {summary}; events -> {events_dir}/<camera_id>.jsonl")
+    if accs:
+        summary = ", ".join(f"{acc.camera.id} ({len(acc.camera.zones)} zone(s))" for acc in accs)
+        print(
+            f"[main] analytics: {summary}; events -> {events_dir}/<camera_id>.jsonl; "
+            f"evidence -> {evidence_dir}/<camera_id>/"
+        )
 
 
 def run_frame(acc: CameraAccumulator, frame, detect: bool, draw_on: np.ndarray | None) -> None:
     if not detect or acc.detector is None:
         return
-    people = acc.detector.process_frame(frame.image)
+    from mobisentra.vision.pose import TrackedPose
+    from mobisentra.vision.tracker import TrackedPerson
+
+    people: list[TrackedPerson]
+    if getattr(acc.detector, "produces_pose", False):
+        poses: list[TrackedPose] = acc.detector.process_frame(frame.image)
+        acc.history.update_poses(frame.capture_ts, poses)
+        people = [
+            TrackedPerson(track_id=p.track_id, bbox=p.bbox, confidence=p.confidence) for p in poses
+        ]
+    else:
+        people = acc.detector.process_frame(frame.image)
     acc.history.update(frame.capture_ts, people)
     if acc.analytics is not None:
         event_rows = acc.analytics.process(frame.capture_ts, frame.image, people)

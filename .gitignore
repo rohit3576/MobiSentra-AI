@@ -56,3 +56,12 @@ coverage/
 
 # Logs
 *.log
+
+# benchmark datasets (Phase 4 Step 4.5) — downloaded data never committed,
+# but the license record + download scripts ARE project files
+!mlops/datasets/
+mlops/datasets/*
+!mlops/datasets/SOURCES.md
+!mlops/datasets/*.py
+mlops/datasets/ur_fall/
+mlops/datasets/le2i/

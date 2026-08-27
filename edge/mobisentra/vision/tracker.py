@@ -47,6 +47,8 @@ class DetectorTracker:
     persist across calls within this instance.
     """
 
+    produces_pose: bool = False
+
     def __init__(
         self,
         *,

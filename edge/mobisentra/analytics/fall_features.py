@@ -57,7 +57,8 @@ def _head_point(sample: PoseSample) -> Point | None:
     return (best[0], best[1]) if best[2] >= KEYPOINT_MIN_CONF else None
 
 
-def _torso_angle(sample: PoseSample) -> float | None:
+def torso_angle(sample: PoseSample) -> float | None:
+    """Shoulder-mid → hip-mid vector vs horizontal, for ONE sample."""
     shoulders = _pair_midpoint(
         sample.keypoints[KeypointIndex.LEFT_SHOULDER],
         sample.keypoints[KeypointIndex.RIGHT_SHOULDER],
@@ -121,7 +122,7 @@ def compute_fall_features(samples: Sequence[PoseSample]) -> FallFeatures:
         return FallFeatures(None, None, None, None)
     latest = samples[-1]
 
-    angle = _torso_angle(latest)
+    angle = torso_angle(latest)
     velocity = _hip_velocity(samples)
 
     head = _head_point(latest)

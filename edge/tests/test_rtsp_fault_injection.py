@@ -70,9 +70,7 @@ def test_camera_kill_and_restore(reader: StreamReader):
     down = subprocess.run([*COMPOSE, "stop", "fake-cam"], check=True, capture_output=True)
     assert down.returncode == 0
     t_kill = time.monotonic()
-    left_up = wait_until(
-        lambda: reader.status().state in ("DOWN", "RECONNECTING"), timeout_s=15.0
-    )
+    left_up = wait_until(lambda: reader.status().state in ("DOWN", "RECONNECTING"), timeout_s=15.0)
     assert left_up, "reader stayed UP >15 s after camera death (gate violation)"
     print(f"\n[fault] left UP after {time.monotonic() - t_kill:.1f}s")
 
@@ -83,7 +81,4 @@ def test_camera_kill_and_restore(reader: StreamReader):
     assert frame is not None
     stats = reader.status()
     assert stats.reconnects >= 1
-    print(
-        f"\n[fault] recovered; reconnects={stats.reconnects} "
-        f"frames_read={stats.frames_read}"
-    )
+    print(f"\n[fault] recovered; reconnects={stats.reconnects} frames_read={stats.frames_read}")

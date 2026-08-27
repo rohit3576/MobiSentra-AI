@@ -22,6 +22,23 @@ decision; `yolo11n-pose.pt` = one-line fallback). Wired in Step 4.1.
 | 4.1 pose swap | ✅ 2026-08-26 | `vision/pose.py` (TrackedPose, COCO-17 KeypointIndex, PoseTracker); keypoint buffer in TrackHistory; real-model smoke on bus1 (IDs persist, 17 kps); bus1 lesson: hips/nose often occluded → features must degrade to None |
 | 4.2 features | ✅ 2026-08-26 | `analytics/fall_features.py` pure features (torso angle, head–hip distance + vertical offset, hip vertical velocity, bbox aspect); 16 synthetic-skeleton tests incl. occlusion degradation |
 | 4.3 rule cascade | ✅ 2026-08-26 | `analytics/fall.py` FallDetector (trigger/confirm/recover state machine, BH/s-normalized velocity, positive-evidence recovery, schemas-v0 `fall_detected`); 10 sequence tests: fall vs sit vs bend, stumble-recovery, re-arm, occluded confirm, configurable T |
+| 4.4 evidence buffer | ✅ 2026-08-27 | `events/evidence.py` (JPEG ring 5 s + H.264 MP4 writer via PyAV + keypoints sidecar + retention cap); wired e2e through `CameraAnalytics`/`run_frame`/`detection.yaml`; real-clip proof on UR Fall fall-01: `fall_detected` row + playable clip; three ID-switch-tolerance cascade fixes driven by that first real run (see below); 182 tests green |
+
+## Step 4.4 decisions (evidence + the fixes the first real run forced)
+
+| Decision | Choice | Why |
+|---|---|---|
+| Ring contents | camera-level, not per track | per-track frame copies multiply memory by head-count; one 5 s JPEG ring per camera serves every track (pre-trigger window spans tracks anyway) |
+| Ring encoding | JPEG q80, width ≤ 960, even dims | ~20× smaller than raw BGR (720p×5 s×10 fps ≈ 100 MB raw → ~5 MB); even dims because yuv420p demands them and every ring frame must mux |
+| Clip format | H.264 MP4 (PyAV/libx264, CRF 23, faststart) | browsers and cv2 both decode it (MJPEG AVI fails the first, raw frames fail disk); "playable" is test-asserted by re-reading every frame with cv2 |
+| Sidecar | `fall_track<id>_t<ms>.keypoints.json` next to the clip | the runbook wants keypoints WITH the clip; Phase 9 replay can re-render skeletons without re-running the model |
+| Retention | `enforce_retention`: ≤ 200 clips/camera, oldest dropped with sidecars | edge disk bound; time-based expiry is an operator policy → Phase 8/9 owns it (hook documented in module docstring) |
+| Evidence window | [trigger − 2 s, fire] from the 5 s ring | fire = trigger + 3 s confirm → window ≈ full ring; pre-trigger context shows the collapse itself |
+| Fall wiring | `CameraAnalytics` for ALL cameras (fall is camera-wide, zones stay per-config) | previously analytics attached only to zoned cameras — a fall in an unzoned camera would have been invisible; `attach_detection` routes `-pose` models to PoseTracker (`produces_pose`) |
+| Confirm clock | `now_ts` = caller's frame time, not the track's last sample | first real run (fall-01): tracker re-labels the person mid-collapse; the trigger track freezes and its own timeline never crosses T — the frame clock still does |
+| Trigger freshness | trigger only if latest sample ≤ 0.5 s old vs frame clock | a recovered track whose history froze mid-collapse re-armed on the OLD velocity evidence and re-fired every 3 s (event spam, measured) |
+| Other-track recovery | hips in grown trigger bbox AND upright ≥ 0.75 s on the other's OWN timeline AND observed after trigger + 0.75 s | duplicates of the same standing person sit inside the trigger area (tracks 2/7 in fall-01) and one noisy lying frame past 55° must not read as "got up"; the after-trigger time gate kills frozen pre-fall duplicates |
+| Benchmark protocol (4.5) | single pass + settle phase: clock advances 3.5 s past clip end with no new detections | UR Fall clips are cut tight (median 3.1 s; 29/30 < 6.5 s) — trigger + 3 s confirm cannot fit inside the footage; settle applies the production occlusion rule ("no new evidence ≠ recovery") instead of weakening T for the benchmark |
 
 ## Step 4.3 decisions (rule cascade v1)
 
@@ -37,13 +54,50 @@ decision; `yolo11n-pose.pt` = one-line fallback). Wired in Step 4.1.
 | Event kind | `fall_detected` | schemas v0 `event_type` — Phase 6 envelopes without rename |
 | Velocity normalization | mean bbox height of the last two samples | pre-collapse height dominates → conservative, resolution-independent |
 
-## Remaining steps
+## Step 4.5 — UR Fall benchmark results (2026-08-27)
 
-| Step | Plan |
-|---|---|
-| 4.4 evidence buffer | 5 s ring per track; on trigger, snapshot clip + keypoints → `evidence_ref`; retention hook documented |
-| 4.5 benchmark | UR Fall + Le2i download scripts (license recorded like Step 1.1); measure detection ≥ 90%, FP < 2/hr; hip-based anatomy finally testable on full-body footage |
-| 4.6 tune | thresholds against 4.5 numbers; classifier ONLY if rules miss the gate |
+Protocol: `edge/tools/fall_benchmark.py` — single pass per clip + 3.5 s settle
+(frame clock advances, no new detections = production occlusion semantics).
+Model `yolo26n-pose.pt` conf 0.3, tracktrack-tuned, imgsz 640, confirm T=3.0 s.
+Detector nondeterminism across runs (MPS + tracker tie-breaking) moves
+individual clips between runs; numbers below are single runs per config.
+
+| Config | Falls fired | ADL FP (in-footage / settle) | FP/hr† | Note |
+|---|---|---|---|---|
+| v1 cascade (4.3 as shipped) | 26/30 (87%) | 2 / 2 | 24–48 | baseline; misses = ID-switch + knee-drop classes |
+| + height-collapse gate | 18/30 (60%) | 0 / 0 | 0 | gate lands inside the real-fall band (bbox lags torso) — REJECTED |
+| + upright-recency gate | 25/30 (83%) | 1 / 2 | 12–36 | kills lying-pose jitter triggers |
+| + sustained high-bar (2.5) | 28/30 (93%) | 8 / 5 | 97–157 | high-bar alone still catches jitter spikes |
+| **final: sustained high-bar (2.0, 2 consecutive pairs) + born-after other-recovery + hip-ref recovery** | **28/30 (93.3%)** | **5 / 4** | **60–109** | misses: fall-27, fall-29 (knee-drop variants, pose stream never yields trigger) |
+
+† 5.0 min of ADL footage — 1 event = 12/hr; the denominator is too small for
+the < 2 FP/hr gate to be meaningfully measurable here. Residual FP census:
+adl-30…40 cluster = UR Fall's designed hard negatives (**deliberate fast
+lying on a mattress** — kinematically a fall minus intent) + residual lying
+jitter (adl-11, adl-30).
+
+## Gate 4 verdict (owner decision pending)
+
+| Gate criterion | Result | Verdict |
+|---|---|---|
+| ≥ 90% of falls caught on UR Fall | **28/30 = 93.3%** | ✅ PASS (2 misses are knee-drop falls whose pose stream never produces a trigger — model-side, not rule-side) |
+| < 2 FP/hr on normal-activity footage | 9 events / 5 min ADL | ❌ as-measured — but (a) denominator too small, (b) FP population = deliberate mattress lies (hard negatives) + lying jitter |
+| Evidence clip attached to every trigger | every `fall_detected` row carries a playable `evidence_ref` (e2e-verified on real footage: 126-frame H.264 + 44-sample keypoint sidecar) | ✅ PASS |
+
+Paths forward (4.6 fork, runbook-sanctioned):
+1. **Zones as semantic filter** (cheapest, uses Phase 3 machinery): beds/
+   seating zones configured as lying-expected areas suppress fall events
+   there — kills the mattress-lie FP class in production without touching
+   the cascade.
+2. Phase 6 debouncing/severity absorbs the residual rate (events ≠ alerts).
+3. Temporal classifier (4.6's escalation): only if 1+2 under-measure.
+
+## Step 4.6 — status
+
+In progress (folded into the 4.5 iteration above): five trigger/recovery
+iterations driven by per-clip failure analysis. Remaining work: apply the
+zones-semantic-filter prototype, re-run FP measurement, then close Phase 4
+with `phase-4-completion.md`.
 
 ## Risks
 

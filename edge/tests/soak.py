@@ -27,8 +27,10 @@ def main() -> None:
 
     run_pipeline(
         [
-            "--config", str(args.config),
-            "--minutes", str(args.minutes),
+            "--config",
+            str(args.config),
+            "--minutes",
+            str(args.minutes),
             *sum((["--rtsp", url] for url in args.rtsp), []),
             *(["--metrics", str(args.metrics)] if args.metrics else []),
         ]

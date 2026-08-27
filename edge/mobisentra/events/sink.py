@@ -28,6 +28,9 @@ class EventRow(TypedDict, total=False):
     to_band: str
     count: int
     ratio: float
+    trigger_ts: float
+    confidence: float
+    evidence_ref: str
 
 
 class JsonlEventWriter:

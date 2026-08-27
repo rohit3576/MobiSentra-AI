@@ -36,8 +36,7 @@ def resolve_source(source: str, *, sample_dir: Path | None = None) -> SourceSpec
         path = base / rel
         if not path.is_file():
             raise ConfigError(
-                f"sample video not found: {path} "
-                f"(place clips under edge/sample_data/videos/)"
+                f"sample video not found: {path} (place clips under edge/sample_data/videos/)"
             )
         return SourceSpec("sample", str(path), True, path)
     if s.startswith("file://"):
@@ -50,8 +49,7 @@ def resolve_source(source: str, *, sample_dir: Path | None = None) -> SourceSpec
     if s.startswith(("rtsp://", "rtsps://")):
         return SourceSpec("rtsp", s, False)
     raise ConfigError(
-        f"unsupported source: {source!r} "
-        f"(expected sample:// | file:// | <webcam index> | rtsp://)"
+        f"unsupported source: {source!r} (expected sample:// | file:// | <webcam index> | rtsp://)"
     )
 
 

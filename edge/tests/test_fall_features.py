@@ -159,8 +159,7 @@ def test_head_hip_vertical_offset_lying_is_near_zero():
 
 
 def test_head_hip_vertical_offset_occluded_is_none():
-    occluded = skeleton(lh=(0.0, 0.0, 0.05), rh=(0.0, 0.0, 0.1),
-                        nose=(0.0, 0.0, 0.05))
+    occluded = skeleton(lh=(0.0, 0.0, 0.05), rh=(0.0, 0.0, 0.1), nose=(0.0, 0.0, 0.05))
     assert head_hip_vertical_offset(pose_at(1.0, STANDING_BBOX, occluded)) is None
 
 

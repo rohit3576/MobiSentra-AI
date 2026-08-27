@@ -33,7 +33,7 @@ Standing rules:
 | 1 | Video Ingestion | 60 min RTSP < 200 ms lag; auto-reconnect < 15 s | ✅ Passed 2026-08-25 (max lag 148 ms; kill detected 0.0 s) |
 | 2 | Detection + Tracking | stable IDs through occlusions; ≥ 15 FPS | 🟡 Executed 2026-08-26 — FPS ✅ (57/44); ID metric 0.741 vs 0.80 → [owner decision pending](./phase-2-completion.md#8-gate-decision--options-for-owner) |
 | 3 | Zones / Occupancy / Door | occupancy ±10% vs manual; 0 FP on empty-zone footage | 🟡 In progress — Steps 3.1–3.5 done 2026-08-26 (zones/engine/occupancy/dwell wired e2e + zone editor round-trip; remaining: Day 6 gate evidence + Day 7 completion) |
-| 4 | Fall Detection | ≥ 90% UR Fall; < 2 FP/hr | 🟡 In progress — Steps 4.1–4.3 done 2026-08-26 (yolo26n-pose; fall features; rule cascade — fall/sit/bend synthetic suite green; phase-4-plan.md retroactive draft) |
+| 4 | Fall Detection | ≥ 90% UR Fall; < 2 FP/hr | 🟡 In progress — 4.1–4.4 done (4.4: evidence clips e2e + ID-switch tolerance); 4.5 done 2026-08-27: **93.3% UR Fall detection ✅**, FP blocked on mattress-lie hard negatives (owner decision in phase-4-plan.md); 4.6 fold: zones-semantic-filter + completion report remain |
 | 5 | Altercation Detection | ≥ 85% fight clips; 0 alerts on 30 min normal footage | ☐ Not started |
 | 6 | Event Engine + Severity | golden-file tests pass | ☐ Not started |
 | 7 | Edge Messaging | 10-min blackout → zero loss, zero dupes | ☐ Not started |
@@ -349,14 +349,13 @@ Standing rules:
 - **Done when:** emits fall candidates with confidence + track ID; unit tested on synthetic sequences (fall vs sit vs bend).
 
 ### Step 4.4 — Evidence buffer
-- **Do:** rolling ~5 s of frames per track (ring buffer); on trigger, snapshot clip + keypoints → referenced by `evidence_ref` in the event payload.
+- [x] **Done 2026-08-27.** `events/evidence.py`: JPEG-compressed 5 s camera ring (`EvidenceBuffer`, downscaled, memory-bounded) + `EvidenceWriter` (H.264 MP4 via PyAV — browser/decoder-friendly, cv2-verified — + `keypoints.json` sidecar) + `enforce_retention` clip cap (retention hook; time-based expiry is Phase 8/9 policy). Wired e2e: `CameraAnalytics` (fall on ALL cameras now, not just zoned), `run_frame` pose branch (`produces_pose` routing), `detection.yaml` → `yolo26n-pose.pt`. Real-clip proof: pipeline over UR Fall `fall-01-cam0` → `fall_detected` row + playable clip + sidecar in `runs/evidence/`. **Also fixed (found by that first real run):** ID-switch tolerance in the cascade — confirm window runs on the frame clock (`now_ts`), triggers require fresh samples (stale histories can't re-arm on old collapse evidence), other-track recovery needs sustained upright on its OWN timeline observed after the trigger (frozen pre-fall duplicates poison recovery otherwise). 182 tests green.
 - **Files:** `edge/mobisentra/events/evidence.py`.
-- **Done when:** a triggered fall produces a playable clip on disk; retention policy hook documented.
 
 ### Step 4.5 — Benchmark on UR Fall + Le2i
-- **Do:** download scripts for UR Fall + Le2i (open datasets; record license/origin like Step 1.1); run the detector over the test sets; measure detection rate + false positives/hour.
+- [x] **Done 2026-08-27** (UR Fall; Le2i documented for manual download). Download: `mlops/datasets/download_ur_fall.py` (host moved to `fenix.ur.edu.pl`, old domain DNS-dead; 70 cam0 MP4s, license CC BY-NC-SA 4.0 + citation recorded in `mlops/datasets/SOURCES.md`; gitignored, benchmark-only). Runner: `edge/tools/fall_benchmark.py` — single pass + settle phase (UR Fall clips median 3.1 s, 29/30 < 6.5 s: a 3 s confirm can only elapse via settle, which applies production occlusion semantics). **Numbers (final cascade, full table in phase-4-plan.md): falls 28/30 = 93.3% (gate ≥90% ✅), ADL FP 9 events / 5.0 min (gate <2 FP/hr ❌ as-measured — FP population is UR Fall's designed mattress-lie hard negatives + lying jitter; mitigation paths documented).** Five cascade iterations were driven by per-clip failure analysis (ID-switch recovery poisoning, jitter velocity spikes, knee-drop falls).
 - **Files:** `mlops/datasets/` scripts + results table in `Doc/`.
-- **Done when:** numbers recorded — target ≥ 90% detection on UR Fall, < 2 FP/hr.
+- **Done when:** numbers recorded — target ≥ 90% detection on UR Fall, < 2 FP/hr. *(detection target met; FP target blocked on hard negatives — owner decision in phase-4-plan.md)*
 
 ### Step 4.6 — Tune; classifier only if needed
 - **Do:** tune thresholds/features against the benchmark. **Only if rules can't hit the gate:** train a lightweight temporal classifier (LSTM/GBM on keypoint sequences) — defer deep models.
