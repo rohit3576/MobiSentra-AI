@@ -95,6 +95,9 @@ def run_frame(acc: CameraAccumulator, frame, detect: bool, draw_on: np.ndarray |
     else:
         people = acc.detector.process_frame(frame.image)
     acc.history.update(frame.capture_ts, people)
+    stale_ids = acc.history.purge(frame.capture_ts)
+    if stale_ids and acc.analytics is not None:
+        acc.analytics.forget(stale_ids)
     if acc.analytics is not None:
         event_rows = acc.analytics.process(frame.capture_ts, frame.image, people)
         if draw_on is not None:

@@ -172,6 +172,49 @@ def test_fall_outside_rest_zone_still_fires(tmp_path: Path):
     assert Path(falls[0]["evidence_ref"]).is_file()
 
 
+def test_forget_clears_pending_cascade_no_delayed_fire(tmp_path: Path):
+    """Long-run hygiene (2026-08-27): a vanished track's pending CONFIRMING
+    state must die with the track — purge propagation, no delayed fire."""
+    history = TrackHistory()
+    analytics = CameraAnalytics(make_camera(), history=history, evidence_root=tmp_path)
+    rows = feed_through_engine(
+        analytics,
+        history,
+        [
+            (0.0, at(0.0)),
+            (0.4, at(0.4, GROUND_BBOX, FALLEN)),
+            (1.0, at(1.0, GROUND_BBOX, FALLEN)),
+        ],
+    )
+    assert [row for row in rows if row["kind"] == "fall_detected"] == []
+    analytics.forget([1])
+    from mobisentra.vision.tracker import TrackedPerson
+
+    person = TrackedPerson(track_id=1, bbox=STANDING_BBOX, confidence=0.9)
+    history.update(20.0, [person])
+    history.update_poses(20.0, [sample_to_pose(at(20.0, GROUND_BBOX, FALLEN))])
+    rows = analytics.process(20.0, FRAME, [person])
+    assert [row for row in rows if row["kind"] == "fall_detected"] == []
+
+
+def test_run_frame_purges_stale_track_keys():
+    """The unbounded-growth bug: TrackHistory keys for vanished tracks were
+    never purged in production — track_ids() (and the per-frame cascade
+    iteration) grew forever on long-running deployments."""
+    history = TrackHistory()
+    acc = CameraAccumulator(
+        camera=make_camera(),
+        reader=object(),
+        detector=FakePoseTracker([[sample_to_pose(at(0.0, STANDING_BBOX, STANDING))], []]),
+        history=history,
+        analytics=None,
+    )
+    run_frame(acc, FrameStub(0.0), detect=True, draw_on=None)
+    assert history.track_ids() == [1]
+    run_frame(acc, FrameStub(100.0), detect=True, draw_on=None)
+    assert history.track_ids() == []
+
+
 def test_run_frame_pose_branch_feeds_keypoint_history():
     history = TrackHistory()
     acc = CameraAccumulator(

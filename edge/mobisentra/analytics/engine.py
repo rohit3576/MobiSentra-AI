@@ -117,6 +117,14 @@ class CameraAnalytics:
             rows.extend(self._fall_rows(ts, rest_tracks))
         return rows
 
+    def forget(self, track_ids: list[int]) -> None:
+        """Drop per-track cascade state for vanished tracks (the run loop
+        calls this with TrackHistory.purge() results — long-running
+        deployments must not accumulate dead-track state)."""
+        if self._fall is not None:
+            for track_id in track_ids:
+                self._fall.forget(track_id)
+
     def _rest_tracks(self, membership: dict[str, set[int]]) -> set[int]:
         """Track IDs inside a rest zone this frame — lying is expected there
         (beds/berths), so the fall cascade is suppressed for them (UR Fall
