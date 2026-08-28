@@ -26,7 +26,7 @@ import cv2
 
 from mobisentra.analytics.engine import CameraAnalytics
 from mobisentra.ingestion.config import CameraConfig
-from mobisentra.vision.action import ActionScorer
+from mobisentra.vision.action import shared_session_factory
 from mobisentra.vision.pose import PoseTracker
 
 
@@ -68,13 +68,11 @@ def main(argv: list[str] | None = None) -> int:
     total_frames = 0
     total_s = 0.0
     t_start = time.time()
+    scorer_factory = shared_session_factory(args.onnx)
     for clip in clips:
-        def factory(onnx_path=args.onnx):
-            return ActionScorer(onnx_path)
-
         analytics = CameraAnalytics(
             CameraConfig(id=clip.stem, source=f"file://{clip}", vehicle_id="NEG", zones={}),
-            action_scorer_factory=factory,
+            action_scorer_factory=scorer_factory,
         )
         cap = cv2.VideoCapture(str(clip))
         src_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0

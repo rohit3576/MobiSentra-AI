@@ -18,6 +18,7 @@ leaks into the new one. Logit order is the engares training order
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -133,3 +134,24 @@ class ActionScorer:
         l_no_fight = float(logits[LOGIT_NO_FIGHT])
         fight, no_fight = _softmax_pair(l_fight, l_no_fight)
         return ActionScore(fight=fight, no_fight=no_fight, logit_fight=l_fight)
+
+
+def shared_session_factory(onnx_path: str | Path) -> Callable[[], ActionScorer]:
+    """One ONNX session behind many cheap ActionScorer instances.
+
+    Step 5.5c lesson (UBI benchmark, 2026-08-28): pair churn on crowded
+    fight footage constructs a scorer per new pair key, and per-pair session
+    construction + warmup (~0.5 s) dropped the run to ~0.8x realtime. ORT
+    sessions are safe to share across sequential ``run`` calls; each
+    ActionScorer keeps its own streaming-state carry, so semantics are
+    identical to per-pair sessions (fresh zeroed evidence window per pair —
+    the throwaway warmup scorer exercises the shared session once)."""
+    import onnxruntime as ort
+
+    session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
+    ActionScorer(onnx_path, session=session, warmup_steps=3)
+
+    def factory() -> ActionScorer:
+        return ActionScorer(onnx_path, session=session, warmup_steps=0)
+
+    return factory

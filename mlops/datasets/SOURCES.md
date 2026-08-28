@@ -48,3 +48,27 @@ protocol for pose-rule detectors on URFD.
 | Downloaded | 2026-08-28 via `download_movinet.py` |
 | Format note (5.1b input) | HF ships **TF checkpoints only — no .tflite, no SavedModel** on the hub. The tflite path therefore means convert-from-checkpoint (their export Colab) or full-TF load; decided at the 5.1b runtime spike |
 | Citation | A. García (engares), *MoViNets for Violence Detection in Video Streaming* (GitHub, 2024); base architecture: D. Kondratyuk et al., "MoViNets: Mobile Video Networks for Efficient Video Recognition", CVPR 2021 |
+
+## UBI-Fights (PRIMARY Gate-5 dataset — Phase 5, Step 5.5b)
+
+| Item | Value |
+|---|---|
+| Files | `ubi_fights/UBI_FIGHTS/{videos/fight/F_*.mp4 (216), videos/normal/N_*.mp4 (784), annotation/*.csv (1000, frame-level), test_videos.csv (official 67-clip test split)}` |
+| Origin | Official: <https://socia-lab.di.ubi.pt/EventDetection/> → `UBI_FIGHTS.zip` (8,117,112,419 bytes). **The plan's 2026-08-27 "official page unreachable" was an EXPIRED SSL CERTIFICATE** — fetch with verification relaxed; integrity pinned by hash below |
+| SHA256 (zip) | `08fb9000ee7a674769ab211961b1f544d63267157ee02ea03d729bdc52c7bb33` (zip deleted after extraction to save disk; hash re-verifiable by re-download) |
+| Downloaded | 2026-08-28, aria2c 16-way segmented (server allows ranges; single connection ≈ 72 KB/s, 16 connections ≈ 4.5–10 MiB/s) |
+| Layout notes | videos split into `fight/` + `normal/` subdirs; annotations are ONE LABEL PER LINE (line N = frame N); filename flags: `F/N_id_indoor(0/1)_camera(0 fixed/1 rotated/2 movable)_color(0 rgb/1 gray)`. All 640×360 @30 fps, ~80 h total |
+| License | Academic research, citation required: B. Degardin, H. Proença, "Human Activity Analysis: Iterative Weak/Self-Supervised Learning Frameworks for Detecting Abnormal Events", *IJCB 2020*, 1–7 |
+| Repo policy | Gitignored, benchmark-only, never bundled (UR Fall posture) |
+
+## Hockey Fights (trigger-stage Gate-5 dataset — Phase 5, Step 5.5b)
+
+| Item | Value |
+|---|---|
+| Files | `hockey/fi*_xvid.avi` (500 fights) + `hockey/no*_xvid.avi` (500 non-fights) — 1000 clips, flat layout, 720×576-sourced 50-frame (~2 s) segments |
+| Origin | Academic Torrents mirror: <https://academictorrents.com/details/38d9ed996a5a75a039b84cf8a137be794e7cee89> (original visilab page dead; Kaggle mirror needs owner creds — the torrent needed neither) |
+| SHA256 (zip) | `c1b9c130ac62b8ddbe0337d08d3b6ecbdf908f2cb6c8e8b19217255692d741d5` (171,330,668 bytes, aria2 piece-verified; zip kept for re-verify) |
+| Downloaded | 2026-08-28 via aria2c torrent, no credentials |
+| License | None stated by the original authors; paper says clips "available by request" (Nievas et al., CAIP 2011). Benchmark-only posture: gitignored, never bundled, never redistributed |
+| Citation | E. Bermejo Nievas, O. Deniz Suarez, G. Bueno García, R. Sukthankar, "Violence Detection in Video Using Computer Vision Techniques", *Computer Analysis of Images and Patterns (CAIP)*, 2011, 332–339 |
+| Protocol note | 2 s clips cannot host the 5 fps sustain+hold alert chain — trigger-stage metrics only (pair formation + peak action score), documented in `tools/fight_benchmark.py` |

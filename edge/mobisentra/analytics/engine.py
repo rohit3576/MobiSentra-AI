@@ -90,6 +90,7 @@ class CameraAnalytics:
         self._scorer_factory = action_scorer_factory
         self._fight = None if action_scorer_factory is None else FightDetector(fight_config)
         self._scorers: dict[tuple[int, int], ActionScorer] = {}
+        self.last_action_scores: dict[tuple[int, int], float] = {}
 
     def process(self, ts: float, frame: np.ndarray, people: list[TrackedPerson]) -> list[EventRow]:
         """One analyzed frame → candidate event rows (may be empty)."""
@@ -203,6 +204,7 @@ class CameraAnalytics:
             crop = self._crop(frame, pair.union_box)
             if crop is not None:
                 scores[key] = scorer.score(crop).fight
+        self.last_action_scores = scores
         known = set(self._pair_finder.known_pairs())
         for key in [key for key in self._scorers if key not in known]:
             del self._scorers[key]
