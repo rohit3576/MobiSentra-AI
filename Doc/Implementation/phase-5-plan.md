@@ -95,7 +95,7 @@ manual fetch for UBI-Fights) — 5.5a still builds against stub/synthetic GT.
   occupancy-hysteresis philosophy); emission = active pairs each frame (the
   consumer always has a current crop box).
 
-### 5.3 — Signal fusion (pure logic; consumes 5.2)
+### 5.3 — Signal fusion (pure logic; consumes 5.2) ✅ 2026-08-28
 
 - **Do:** `analytics/fight.py` — candidate = action score ≥ S AND proximity
   sustained AND rapid relative motion AND box-intersection oscillation
@@ -103,9 +103,26 @@ manual fetch for UBI-Fights) — 5.5a still builds against stub/synthetic GT.
   candidate events (event kind verified against the locked v0 type list at
   execution; `fall_detected` naming precedent). Clean re-arm semantics;
   severity + debouncing stay Phase 6.
-- **Done when:** fusion unit tests prove each signal alone is silent and
-  only the combination fires; synthetic sequence suite (fight vs hug vs
-  pass-by vs rush) green.
+- **Done when:** ✅ **9/9 fusion tests** — each signal alone silent (hug =
+  high score + contact but low motion; pass-by = low score; rush = motion +
+  score but no contact; score-alone) + fight fires only on all four;
+  grapple (sustained-contact) path; one-fire-per-engagement +
+  de-escalation re-arm; window expiry; forget. **Event kind =
+  `altercation_suspected`** — already in the locked v0 enum
+  (schemas/events/v0/event.schema.json). **Wired beside fall in
+  `CameraAnalytics`** via `action_scorer_factory` (4/4 wiring tests:
+  full-stack row emission with a high-score stub, silence with a low-score
+  stub on identical motion, no-factory = no fight path, forget propagation
+  incl. scorer GC). **Real-model full-stack sanity: bus1.mp4, 96 frames
+  @5fps → 0 `altercation_suspected` rows** (the 5.2 pair forms and gets
+  scored; fusion correctly stays silent on normal footage); fight-path
+  overhead ≈ 0.1 s / 96 frames (scoring only while a pair is active).
+  Design: motion = peak relative center speed in box-diagonal units/s;
+  contact = ≥2 IoU onsets over `contact_iou` in a 3 s window OR one contact
+  ≥1.5 s (grapple); all-signals hold ≥0.6 s before firing; re-arm needs
+  positive de-escalation (score < S or pair gone). Fight rows carry
+  `action_score` + `confidence`; pair evidence clips ride the Phase 6
+  writer generalization.
 
 ### 5.4 — Negatives corpus (no owner input; no creds)
 

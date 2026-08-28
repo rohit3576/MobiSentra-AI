@@ -115,6 +115,11 @@ class PairFinder:
         """Pairs currently at/over the sustain threshold — telemetry."""
         return [key for key, s in self._states.items() if s.run >= self._config.sustain_frames]
 
+    def known_pairs(self) -> list[tuple[int, int]]:
+        """All pairs with live state (sustained or within gap grace) — the
+        engine prunes per-pair scorer instances against this."""
+        return list(self._states)
+
     def update(self, ts: float, boxes: Mapping[int, Box]) -> list[InteractionPair]:
         config = self._config
         seen: set[tuple[int, int]] = set()

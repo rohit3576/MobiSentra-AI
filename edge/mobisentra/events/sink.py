@@ -20,6 +20,8 @@ class EventRow(TypedDict, total=False):
     camera_id: str
     zone: str
     track_id: int
+    track_a: int
+    track_b: int
     ts: float
     first_seen_ts: float
     dwell_seconds: float
@@ -30,6 +32,7 @@ class EventRow(TypedDict, total=False):
     ratio: float
     trigger_ts: float
     confidence: float
+    action_score: float
     evidence_ref: str
 
 
