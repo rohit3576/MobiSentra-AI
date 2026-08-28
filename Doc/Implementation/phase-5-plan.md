@@ -76,15 +76,24 @@ manual fetch for UBI-Fights) — 5.5a still builds against stub/synthetic GT.
 | 5.1b runtime spike ✅ 2026-08-28 | measure the ladder on MPS with A2 over a 20–30 s sample stream: per-frame latency + end-to-end FPS impact; CPU-only sanity run; record numbers in this doc | results table → this doc | ✅ **runtime picked: ONNX explicit-states (onnxruntime), 10.6 ms/frame, semantics verified, numerically exact vs TF** — full ladder in Step 5.1 decisions; harness `edge/tools/spike_movinet_runtime.py`, results `edge/runs/movinet-spike.json` |
 | 5.1c wrapper ✅ 2026-08-28 | `ActionScorer` behind a pure interface (DetectorTracker pattern — downstream code never imports TF); onnxruntime engine; streaming state carry (73 tensors); warm-up semantics documented; unit tests run against a recorded-score stub (no runtime import in the test path) | `edge/mobisentra/vision/action.py` + tests | ✅ 10/10 stubbed tests green (state carry, reset, letterbox geometry, RGB/scale, int32 state dtype, warmup, output-count validation); real-clip proof: bus1.mp4 96 steps P(Fight) 0.34 cold → **0.010 settled** (evidence warm-up), UR Fall adl-01 max 0.338/end 0.156 (no fight); latency via our interface **11.4 ms mean / 14.0 ms p95** (matches spike 10.3); artifact = `mlops/datasets/movinet/movinet_a2_explicit_states.onnx` (24.9 MB, gitignored) + provenance sidecar; exporter `tools/export_movinet_onnx.py` (spike-venv, offline) |
 
-### 5.2 — Pair-finding (pure logic; no model, no dataset)
+### 5.2 — Pair-finding (pure logic; no model, no dataset) ✅ 2026-08-28
 
 - **Do:** `analytics/pairs.py` — track pairs with IoU/center-distance
   proximity sustained > N frames → candidate interaction pairs; expose the
   union box (crop source for the action model).
-- **Done when:** unit tests with synthetic boxes (sustained overlap fires;
-  single-frame overlap doesn't; distant pairs never pair); on sample
-  footage, two interacting people become a candidate pair before any
-  classification runs.
+- **Done when:** ✅ 12/12 synthetic-box tests (sustained fires exactly at
+  threshold; single-frame never fires — with gap-survival continuity proof;
+  distant never pairs; near-without-overlap fires via center distance;
+  tolerated gap keeps the run; gap>limit resets; union box; per-frame
+  emission with current union; `forget` drops pairs; both-absent drops;
+  degenerate boxes inert). **Real-footage proof (production config: yolo26n-pose
+  + tracktrack-tuned, 96 frames @5fps on bus1.mp4): exactly one candidate pair
+  — tracks (4,11), first-active t=12.0 s, run=5, union (191,131,333,301) —
+  formed before any classification ran; 3–5 people on screen, no pair spam.**
+  Design: proximity = IoU ≥ 0.08 OR center distance ≤ 0.9 mean-box-diagonals
+  (scale-invariant); gap grace = 2 misses keep the run (flicker tolerance,
+  occupancy-hysteresis philosophy); emission = active pairs each frame (the
+  consumer always has a current crop box).
 
 ### 5.3 — Signal fusion (pure logic; consumes 5.2)
 
