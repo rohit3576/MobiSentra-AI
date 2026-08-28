@@ -336,7 +336,7 @@ def main(argv: list[str] | None = None) -> int:
 
     frames, prep_ms = sample_frames(args.video, args.fps, args.seconds)
     if not frames:
-        raise SystemExit(f"no frames decoded from {args.video} (run from repo root, or pass --video)")
+        raise SystemExit(f"no frames decoded from {args.video} (run from repo root)")
     n_frames = len(frames)
     print(
         f"[data] {n_frames} frames @ {args.fps:.0f}fps from {args.video.name}"
