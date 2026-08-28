@@ -8,7 +8,7 @@ Execution runbooks for building MobiSentra AI, in strict sequence.
 |---|---|
 | [`implementation-sequence.md`](./implementation-sequence.md) | **THE runbook** — every step in execution order, with commands, files, and gates. Start here. |
 | [`phase-4-plan.md`](./phase-4-plan.md) | Phase 4 (fall detection) design plan — 4.1–4.5 executed (evidence clips, UR Fall benchmark: 93.3% detection, FP hard-negative analysis, gate verdict + owner decision pending); 4.6 fold remains |
-| [`phase-5-plan.md`](./phase-5-plan.md) | Phase 5 (altercation) design plan — **DRAFT, awaiting approval**; execution gated on Gates 3+4 closing; 2026-08-27 research: engares repo unlicensed (wrapper-only posture), TF/PyTorch runtime spike, dataset mirrors verified |
+| [`phase-5-plan.md`](./phase-5-plan.md) | Phase 5 (altercation) design plan — **APPROVED 2026-08-28; execution division ready** (5.1a–5.5c, one-by-one per working agreement; only 5.5b needs owner input = Kaggle creds, fallbacks documented); 2026-08-27 research: engares repo unlicensed (wrapper-only posture), TF/PyTorch runtime spike, dataset mirrors verified |
 | [`phase-3-completion.md`](./phase-3-completion.md) | Phase 3 completion report — Gate 3 at 2/3 (empty-zone FP ✅ 30 min/0 events; occupancy verdict awaits owner's 5 manual counts) |
 | [`phase-3-plan.md`](./phase-3-plan.md) | Phase 3 (zones/occupancy/door) design plan — **DRAFT, awaiting approval** |
 | [`phase-2-completion.md`](./phase-2-completion.md) | Phase 2 completion report — gate evidence, A/B tables, pending owner checklist/decision |
@@ -17,7 +17,9 @@ Execution runbooks for building MobiSentra AI, in strict sequence.
 | [`phase-1-completion.md`](./phase-1-completion.md) | Phase 1 completion report — evidence, issues hit |
 | [`phase-0-completion.md`](./phase-0-completion.md) | Phase 0 completion report — evidence, corrections, issues hit (2026-08-25) |
 | [`../plan.md`](../plan.md) | Original vision / architecture background — *why the project exists* |
+| [`../research/bus-reality.md`](../research/bus-reality.md) | Web research 2026-08-28 — real-world bus incident patterns (India + global), validates the MVP event set, sources the post-MVP backlog additions (footboard detection, panic-button ingestion, harsh-braking correlation) |
 | [`../implementation-plan.md`](../implementation-plan.md) | Locked decisions, rationale, risk register, timeline — *what we build & why* |
+| [`../handoff-2026-08-27.md`](../handoff-2026-08-27.md) | Session log: Phases 4.4–4.6 + 3.6 executed (evidence clips, UR Fall 93.3%, REST zones, Gate-3 evidence, Phase-5 plan draft); pickup list inside |
 | [`../handoff-2026-08-26-session2.md`](../handoff-2026-08-26-session2.md) | Session log: Gate 2 resolution (ReID rejected, TrackTrack shipped) + sample-clip hunt (2026-08-26) |
 | [`../handoff-2026-08-26.md`](../handoff-2026-08-26.md) | Session log from the Phase 2 completion session (2026-08-26) |
 | [`../handoff-2026-08-24.md`](../handoff-2026-08-24.md) | Session log from the planning session (2026-08-24) |

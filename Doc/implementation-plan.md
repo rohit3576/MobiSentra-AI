@@ -61,7 +61,7 @@ Key dependency licenses to respect (spot-check before adding anything new):
 | 3 | Fall / collapse detection | Pose keypoints + temporal rules → classifier later |
 | 4 | Altercation detection | Pretrained MoViNet4Violence → fine-tune later |
 
-Later phases (post-MVP): door obstruction, restricted-zone intrusion, abandoned object, platform safety, emergency crowd movement, seat/zone occupancy.
+Later phases (post-MVP): abandoned object, platform safety, emergency crowd movement, seat/zone occupancy, **footboard-travel detection** (person in door zone while vehicle moves — India's #1 fatal bus pattern, 48% of fatal bus accidents per MoRTH 2024; door_roi + the reserved vehicle-telemetry slot already exist), **panic-button event ingestion** (ethical harassment response — evidence clip auto-attach; DTC-style buttons already fielded), **harsh-braking ↔ fall correlation** (driver coaching + objective incident evidence). Research-backed 2026-08-28 — see `Doc/research/bus-reality.md`. *(Door obstruction + restricted-zone intrusion shipped as Phase 3 MVP steps 3.3/3.4 — removed from this backlog list.)*
 
 ---
 
