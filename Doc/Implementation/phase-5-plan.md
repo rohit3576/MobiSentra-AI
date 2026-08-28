@@ -124,15 +124,33 @@ manual fetch for UBI-Fights) — 5.5a still builds against stub/synthetic GT.
   `action_score` + `confidence`; pair evidence clips ride the Phase 6
   writer generalization.
 
-### 5.4 — Negatives corpus (no owner input; no creds)
+### 5.4 — Negatives corpus (no owner input; no creds) ✅ 2026-08-28
 
 - **Do:** hunt + download ≥ 30 min open-licensed normal-interaction clips
   (hugging, playing, rushing-to-exit, assisting, normal crowds) —
   Pexels/Pixabay/Commons, same hunt pattern as the Gate-2 re-gate; manifest
   with origin + license per clip.
 - **Files:** `edge/sample_data/negatives/` + manifest (SOURCES.md pattern).
-- **Done when:** ≥ 30 min footage on disk, manifest complete, one command
-  runs the whole set as the FP regression input.
+- **Done when:** ✅ **147 clips / 42.4 min on disk** (hug 41/10.0min, play
+  44/11.5min, rush 24/9.7min, assist 17/3.9min, crowd 21/7.3min; ≤640×360,
+  ~185 MB, gitignored media + committed `manifest.csv` with per-clip origin
+  URLs + SHA256s + `SOURCES.md`). Pinned re-fetch:
+  `mlops/datasets/download_negatives.py` (curl_cffi — Pexels WAF rejects
+  plain clients; resumable, 147/147 verified skip-on-rerun). One-command FP
+  regression: `edge/tools/fight_negatives_soak.py --onnx <movinet.onnx>`
+  (full production stack per clip, exit 1 on alerts, JSON report).
+- **First FP census (baseline for 5.5): 22 alerts / 42.4 min = 31/hr —
+  Gate 5 needs 0.** By category: assist **0**/17 ✅, crowd **0**/21 ✅ (the
+  pair-spam risk is clean — fusion holds in dense crowds); hug 7/41, play
+  5/44, rush 3/24. Triage hypotheses for 5.5c tuning: (a) hug FPs = one
+  approach-burst motion peak satisfies the window — require motion
+  RECENCY (peak within ~1 s) or favor repeated-onset contact over the
+  sustained-contact/grapple alternative (hug = contact starts and STAYS;
+  clinch-fight oscillates); (b) play/rush FPs skew model-side
+  (action_score up to 1.0 on wrestling-shaped play — RWF-trained
+  grappling bias) → raise `action_score_min` and re-census. Note: benign
+  OpenCV-5 `recursive_mutex` abort fires at soak EXIT after the report is
+  written (cv2 teardown, not pipeline).
 
 ### 5.5 — Evaluation (⚠️ 5.5b is the ONLY owner-input step)
 
