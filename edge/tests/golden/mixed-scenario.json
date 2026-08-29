@@ -1,0 +1,297 @@
+{
+  "description": "cross-kind interplay: fall + multi-row frame (fight + zone entry), order-proof pair key suppression, fight re-fire to CRITICAL, fall cooldown re-arm, door + ratio-escalated overcrowding, no cross-kind interference",
+  "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+  "model_versions": {
+    "detector": "gold-stub@1"
+  },
+  "policy": {
+    "severities": {
+      "fall_detected": "HIGH",
+      "altercation_suspected": "HIGH",
+      "restricted_zone_entry": "LOW",
+      "door_obstruction": "MEDIUM",
+      "overcrowding": "MEDIUM",
+      "occupancy_level_change": "LOW"
+    },
+    "overcrowding_escalates_at": 1.5,
+    "overcrowding_escalates_to": "HIGH",
+    "cooldowns_s": {
+      "fall_detected": 300.0,
+      "altercation_suspected": 180.0,
+      "overcrowding": 120.0,
+      "occupancy_level_change": 120.0,
+      "restricted_zone_entry": 600.0,
+      "door_obstruction": 300.0
+    },
+    "fight_escalation_window_s": 600.0,
+    "fight_escalation_severity": "CRITICAL"
+  },
+  "input_frames": [
+    [
+      {
+        "kind": "fall_detected",
+        "camera_id": "BUS_102_CAM_04",
+        "track_id": 27,
+        "ts": 1000.0,
+        "confidence": 0.93
+      }
+    ],
+    [
+      {
+        "kind": "altercation_suspected",
+        "camera_id": "BUS_102_CAM_04",
+        "track_a": 4,
+        "track_b": 11,
+        "ts": 1020.0,
+        "trigger_ts": 1019.4,
+        "confidence": 0.8,
+        "action_score": 0.85
+      },
+      {
+        "kind": "restricted_zone_entry",
+        "camera_id": "BUS_102_CAM_04",
+        "zone": "pit",
+        "track_id": 9,
+        "dwell_seconds": 5.5,
+        "first_seen_ts": 1014.5,
+        "ts": 1020.0
+      }
+    ],
+    [
+      {
+        "kind": "altercation_suspected",
+        "camera_id": "BUS_102_CAM_04",
+        "track_a": 11,
+        "track_b": 4,
+        "ts": 1100.0,
+        "trigger_ts": 1099.5,
+        "confidence": 0.8,
+        "action_score": 0.85
+      }
+    ],
+    [
+      {
+        "kind": "fall_detected",
+        "camera_id": "BUS_102_CAM_04",
+        "track_id": 27,
+        "ts": 1400.0,
+        "confidence": 0.93
+      }
+    ],
+    [
+      {
+        "kind": "altercation_suspected",
+        "camera_id": "BUS_102_CAM_04",
+        "track_a": 4,
+        "track_b": 11,
+        "ts": 1500.0,
+        "trigger_ts": 1499.4,
+        "confidence": 0.8,
+        "action_score": 0.85
+      }
+    ],
+    [
+      {
+        "kind": "door_obstruction",
+        "camera_id": "BUS_102_CAM_04",
+        "zone": "door_roi",
+        "track_id": 3,
+        "dwell_seconds": 3.2,
+        "first_seen_ts": 1596.8,
+        "door_state": "closed",
+        "ts": 1600.0
+      }
+    ],
+    [
+      {
+        "kind": "occupancy_level_change",
+        "camera_id": "BUS_102_CAM_04",
+        "zone": "cabin",
+        "from_band": "crowded",
+        "to_band": "overcrowded",
+        "count": 85,
+        "ratio": 1.7,
+        "ts": 1700.0
+      }
+    ]
+  ],
+  "expected_envelopes": [
+    {
+      "specversion": "1.0",
+      "id": "gold-001",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.fall_detected",
+      "time": "1970-01-01T00:16:40Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "fall_detected",
+        "severity": "HIGH",
+        "camera_id": "BUS_102_CAM_04",
+        "location": null,
+        "tracks": [
+          27
+        ],
+        "confidence": 0.93,
+        "timestamp": "1970-01-01T00:16:40Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        }
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "gold-002",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.altercation_suspected",
+      "time": "1970-01-01T00:17:00Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "altercation_suspected",
+        "severity": "HIGH",
+        "camera_id": "BUS_102_CAM_04",
+        "location": null,
+        "tracks": [
+          4,
+          11
+        ],
+        "confidence": 0.8,
+        "timestamp": "1970-01-01T00:17:00Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        },
+        "trigger_ts": 1019.4,
+        "action_score": 0.85
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "gold-003",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.restricted_zone_entry",
+      "time": "1970-01-01T00:17:00Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "restricted_zone_entry",
+        "severity": "LOW",
+        "camera_id": "BUS_102_CAM_04",
+        "location": "pit",
+        "tracks": [
+          9
+        ],
+        "confidence": 1.0,
+        "timestamp": "1970-01-01T00:17:00Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        },
+        "dwell_seconds": 5.5,
+        "first_seen_ts": 1014.5
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "gold-004",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.fall_detected",
+      "time": "1970-01-01T00:23:20Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "fall_detected",
+        "severity": "HIGH",
+        "camera_id": "BUS_102_CAM_04",
+        "location": null,
+        "tracks": [
+          27
+        ],
+        "confidence": 0.93,
+        "timestamp": "1970-01-01T00:23:20Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        }
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "gold-005",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.altercation_suspected",
+      "time": "1970-01-01T00:25:00Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "altercation_suspected",
+        "severity": "CRITICAL",
+        "camera_id": "BUS_102_CAM_04",
+        "location": null,
+        "tracks": [
+          4,
+          11
+        ],
+        "confidence": 0.8,
+        "timestamp": "1970-01-01T00:25:00Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        },
+        "trigger_ts": 1499.4,
+        "action_score": 0.85
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "gold-006",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.door_obstruction",
+      "time": "1970-01-01T00:26:40Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "door_obstruction",
+        "severity": "MEDIUM",
+        "camera_id": "BUS_102_CAM_04",
+        "location": "door_roi",
+        "tracks": [
+          3
+        ],
+        "confidence": 1.0,
+        "timestamp": "1970-01-01T00:26:40Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        },
+        "dwell_seconds": 3.2,
+        "first_seen_ts": 1596.8,
+        "door_state": "closed"
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "gold-007",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.overcrowding",
+      "time": "1970-01-01T00:28:20Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "overcrowding",
+        "severity": "HIGH",
+        "camera_id": "BUS_102_CAM_04",
+        "location": "cabin",
+        "tracks": [],
+        "confidence": 1.0,
+        "timestamp": "1970-01-01T00:28:20Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        },
+        "from_band": "crowded",
+        "to_band": "overcrowded",
+        "count": 85,
+        "ratio": 1.7
+      }
+    }
+  ],
+  "expected_suppressed": {
+    "altercation_suspected/4/11": 1
+  }
+}

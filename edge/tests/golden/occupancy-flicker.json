@@ -1,0 +1,196 @@
+{
+  "description": "band escalation (incl. ratio-to-HIGH), duplicate-transition suppression, de-escalation exempt + re-arm, occupancy family key",
+  "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+  "model_versions": {
+    "detector": "gold-stub@1"
+  },
+  "policy": {
+    "severities": {
+      "fall_detected": "HIGH",
+      "altercation_suspected": "HIGH",
+      "restricted_zone_entry": "LOW",
+      "door_obstruction": "MEDIUM",
+      "overcrowding": "MEDIUM",
+      "occupancy_level_change": "LOW"
+    },
+    "overcrowding_escalates_at": 1.5,
+    "overcrowding_escalates_to": "HIGH",
+    "cooldowns_s": {
+      "fall_detected": 300.0,
+      "altercation_suspected": 180.0,
+      "overcrowding": 120.0,
+      "occupancy_level_change": 120.0,
+      "restricted_zone_entry": 600.0,
+      "door_obstruction": 300.0
+    },
+    "fight_escalation_window_s": 600.0,
+    "fight_escalation_severity": "CRITICAL"
+  },
+  "input_frames": [
+    [
+      {
+        "kind": "occupancy_level_change",
+        "camera_id": "BUS_102_CAM_04",
+        "zone": "bus_area",
+        "from_band": "crowded",
+        "to_band": "overcrowded",
+        "count": 61,
+        "ratio": 1.22,
+        "ts": 100.0
+      }
+    ],
+    [
+      {
+        "kind": "occupancy_level_change",
+        "camera_id": "BUS_102_CAM_04",
+        "zone": "bus_area",
+        "from_band": "crowded",
+        "to_band": "overcrowded",
+        "count": 61,
+        "ratio": 1.22,
+        "ts": 130.0
+      }
+    ],
+    [
+      {
+        "kind": "occupancy_level_change",
+        "camera_id": "BUS_102_CAM_04",
+        "zone": "bus_area",
+        "from_band": "overcrowded",
+        "to_band": "crowded",
+        "count": 55,
+        "ratio": 1.1,
+        "ts": 160.0
+      }
+    ],
+    [
+      {
+        "kind": "occupancy_level_change",
+        "camera_id": "BUS_102_CAM_04",
+        "zone": "bus_area",
+        "from_band": "crowded",
+        "to_band": "overcrowded",
+        "count": 80,
+        "ratio": 1.6,
+        "ts": 190.0
+      }
+    ],
+    [
+      {
+        "kind": "occupancy_level_change",
+        "camera_id": "BUS_102_CAM_04",
+        "zone": "bus_area",
+        "from_band": "overcrowded",
+        "to_band": "crowded",
+        "count": 55,
+        "ratio": 1.1,
+        "ts": 220.0
+      }
+    ]
+  ],
+  "expected_envelopes": [
+    {
+      "specversion": "1.0",
+      "id": "gold-001",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.overcrowding",
+      "time": "1970-01-01T00:01:40Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "overcrowding",
+        "severity": "MEDIUM",
+        "camera_id": "BUS_102_CAM_04",
+        "location": "bus_area",
+        "tracks": [],
+        "confidence": 1.0,
+        "timestamp": "1970-01-01T00:01:40Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        },
+        "from_band": "crowded",
+        "to_band": "overcrowded",
+        "count": 61,
+        "ratio": 1.22
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "gold-002",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.occupancy_level_change",
+      "time": "1970-01-01T00:02:40Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "occupancy_level_change",
+        "severity": "LOW",
+        "camera_id": "BUS_102_CAM_04",
+        "location": "bus_area",
+        "tracks": [],
+        "confidence": 1.0,
+        "timestamp": "1970-01-01T00:02:40Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        },
+        "from_band": "overcrowded",
+        "to_band": "crowded",
+        "count": 55,
+        "ratio": 1.1
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "gold-003",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.overcrowding",
+      "time": "1970-01-01T00:03:10Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "overcrowding",
+        "severity": "HIGH",
+        "camera_id": "BUS_102_CAM_04",
+        "location": "bus_area",
+        "tracks": [],
+        "confidence": 1.0,
+        "timestamp": "1970-01-01T00:03:10Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        },
+        "from_band": "crowded",
+        "to_band": "overcrowded",
+        "count": 80,
+        "ratio": 1.6
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "gold-004",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.occupancy_level_change",
+      "time": "1970-01-01T00:03:40Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "occupancy_level_change",
+        "severity": "LOW",
+        "camera_id": "BUS_102_CAM_04",
+        "location": "bus_area",
+        "tracks": [],
+        "confidence": 1.0,
+        "timestamp": "1970-01-01T00:03:40Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        },
+        "from_band": "overcrowded",
+        "to_band": "crowded",
+        "count": 55,
+        "ratio": 1.1
+      }
+    }
+  ],
+  "expected_suppressed": {
+    "occupancy/bus_area": 1
+  }
+}

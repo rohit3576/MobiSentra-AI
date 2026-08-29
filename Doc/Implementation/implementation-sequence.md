@@ -35,7 +35,7 @@ Standing rules:
 | 3 | Zones / Occupancy / Door | occupancy ±10% vs manual; 0 FP on empty-zone footage | 🟡 Gate 3: 2/3 ticked — empty-zone FP ✅ (30 min stream, 0 events, 2026-08-27) + editor round-trip ✅; occupancy ±10% measured (3,3,3,5,4 on bus1), verdict awaits owner's 5 manual counts → then `phase-3-completion.md` |
 | 4 | Fall Detection | ≥ 90% UR Fall; < 2 FP/hr | 🟡 In progress — 4.1–4.5 done (4.5: **93.3% detection ✅**; FP blocked on mattress-lie hard negatives); 4.6 option (a) shipped 2026-08-27 (REST zones suppress falls in beds/berths — FP 9→6 with auto-marked zones, mechanism unit-proven, definitive number needs human-marked polygons); remaining: FP closure decision + `phase-4-completion.md` |
 | 5 | Altercation Detection | ≥ 85% fight clips; 0 alerts on 30 min normal footage | 🟡→❎ Executed 2026-08-28, **closed 2026-08-29 by owner decision (c) "accept documented limitation"** (Gate-4 FP-fork precedent): fight path built/wired/tested (235+4 suite), but Gate 5 numeric criteria unmet (UBI 11/40 full-length, 5/35 windowed vs ≥85%; negatives 22 alerts/42.4 min vs 0 — assist+crowd clean). Negative suite ✅ committed. Tuning deferred to Phase 10 data loop; windowed protocol (~5 min/run) reserved. Evidence in runs/*.json → [phase-5-completion.md](./phase-5-completion.md) |
-| 6 | Event Engine + Severity | golden-file tests pass | 🟡 In progress — 6.1a–6.3a ✅ + **6.3b ✅** (evidence writer generalized: fight pair clips + sidecars + `evidence_ref` stamped, fall byte-identical, retention spans kinds; suite 323+4); remaining 6.4 golden files = Gate 6 |
+| 6 | Event Engine + Severity | golden-file tests pass | ✅ **PASSED 2026-08-29** — 6.1a–6.4 all ✅; Gate 6 ticked (4 reviewed goldens byte-exact + purity guard + all-outputs schema-valid incl. production smoke 55/55); suite 327+4, ruff clean; report: `phase-6-completion.md` |
 | 7 | Edge Messaging | 10-min blackout → zero loss, zero dupes | ☐ Not started |
 | 8 | Backend Services | restart-safe consumer; event < 1 s to dashboard | ☐ Not started |
 | 9 | Dashboard | e2e demo < 2 s → **tag v0.1.0** | ☐ Not started |
@@ -430,9 +430,9 @@ Standing rules:
 - **Done when:** golden suite green.
 
 ### GATE 6 — Event Engine
-- [ ] Golden-file tests pass — no duplicates, correct severities, debounce windows honored
-- [ ] Engine is pure logic (no camera, network, or DB calls inside)
-- [ ] All events validate against schema v0
+- [x] Golden-file tests pass — no duplicates, correct severities, debounce windows honored ✅ 2026-08-29: 4 goldens (repeated-falls, occupancy-flicker, fight-below-fusion, mixed-scenario) byte-exact, manually reviewed; mutation test proved single-severity sensitivity
+- [x] Engine is pure logic (no camera, network, or DB calls inside) ✅ AST import-allowlist guard (test_event_engine.py, since 6.1b)
+- [x] All events validate against schema v0 ✅ goldens + wiring tests + production smoke (55/55 envelopes, 6.3a) all Draft-07 validated
 
 ---
 

@@ -1,7 +1,7 @@
 # Phase 6 — Event Engine + Severity · Plan
 
-> **Status: APPROVED 2026-08-29 (owner: "ok start the phase 6.1a" — defaults
-> locked as proposed); execution one-by-one per the working agreement.**
+> **Status: EXECUTED + CLOSED 2026-08-29 — Gate 6 PASSED 3/3 on first
+> evaluation (see `phase-6-completion.md`).**
 > Source of truth: `implementation-sequence.md` Phase 6 (on conflict, the
 > runbook + `implementation-plan.md` Phase 6 §items win).
 > **Zero owner-input steps this phase** — no datasets, no creds, no external
@@ -90,11 +90,11 @@ Proposed execution order: **6.1a → 6.1b → 6.2 → 6.3a → 6.3b → 6.4**
 |---|---|---|
 | Generalize `write_fall_clip` → `write_clip(kind=…)` (naming stem per kind, same MP4 + sidecar path); `CameraAnalytics._fight_row` snapshots the evidence buffer on fire and stamps `evidence_ref` (the documented Phase-6 deferral) | `edge/mobisentra/events/evidence.py`, `edge/mobisentra/analytics/engine.py` + tests (`test_evidence.py`, `test_fight_wiring.py`) | ✅ **8/8 new tests green, fall suite untouched-green** (total 315→323, ruff clean). `write_clip(kind, tracks, …)` is the one general path (shared av-muxing); `write_fall_clip` delegates — **fall stems byte-identical** (explicitly asserted: `fall_track7_t12000.mp4`), sidecar keeps the Phase-4 `track_id` field for single-track clips plus new `kind`+`tracks` keys (additive; grep proved no sidecar consumers to break). Fight: `fight_track11-track4_t3000.mp4` stems, playable MP4 (re-opened via cv2, all frames back), sidecar `kind=fight`/`tracks=[a,b]`/no legacy singular, empty-window → sidecar-only, retention spans both kinds (oldest dropped with sidecar). `CameraAnalytics._fight_row` snapshots `[trigger − pre, fire]` from the shared buffer, writes the pair clip + both tracks' pose samples (empty when composed without history), enforces retention, stamps `evidence_ref`; writer-less composition stays evidence-free (tested) |
 
-### 6.4 — Golden files + purity guard (Gate 6)
+### 6.4 — Golden files + purity guard (Gate 6) ✅ 2026-08-29
 
 | Do | Files | Done when |
 |---|---|---|
-| Scripted signal sequences → exact expected envelope streams as committed JSONL goldens: (1) repeated falls one track → one alert; (2) occupancy flicker → no duplicate/spurious events; (3) fight below fusion → nothing (upstream silence preserved through the engine); (4) full mixed scenario (fall + fight re-fire escalation + zone + occupancy bands + cooldown expiry re-arm). Purity guard: AST import-allowlist test on `events/engine.py` (stdlib + typing only — no cv2/network/DB) | `edge/tests/golden/*.json` + `edge/tests/golden/README.md` + `edge/tests/test_golden.py` + purity test in `test_event_engine.py` | golden suite green byte-exact (fixed clock/id-factory); purity test fails if engine imports anything outside the allowlist |
+| Scripted signal sequences → exact expected envelope streams as committed JSONL goldens: (1) repeated falls one track → one alert; (2) occupancy flicker → no duplicate/spurious events; (3) fight below fusion → nothing (upstream silence preserved through the engine); (4) full mixed scenario (fall + fight re-fire escalation + zone + occupancy bands + cooldown expiry re-arm). Purity guard: AST import-allowlist test on `events/engine.py` (stdlib + typing only — no cv2/network/DB) | `edge/tests/golden/*.json` + `edge/tests/golden/README.md` + `edge/tests/test_golden.py` + purity test in `test_event_engine.py` | ✅ **4/4 goldens byte-exact + manually reviewed** (suite 323→327, ruff clean). Runner replays each scenario through the **real** resolver + engine with a fixed id-factory (`gold-001…`), asserts full-stream equality + suppression counts, validates every expected envelope against the shared schemas. Goldens carry an **inline policy** so operator edits to severity.yaml never break them (resolver *rules* stay exercised — code changes surface as golden diffs). Review findings: fall re-arm at Δ400 s ✓, family-key suppression ✓, ratio 1.22 MEDIUM vs 1.6/1.7 HIGH ✓, de-escalation exempt + re-arm ✓, fight Δ480 s → CRITICAL ✓, order-proof pair key `altercation_suspected/4/11` ✓, zero fight envelopes from non-fight rows ✓. **Mutation test:** flipping one severity in a golden failed the suite (sensitivity proven). Purity guard shipped with 6.1b. `GOLDEN_REGEN=1` maintenance path documented in `tests/golden/README.md` (regenerate → review-the-diff rule) |
 
 ## Gate 6 — checklist (from the runbook)
 

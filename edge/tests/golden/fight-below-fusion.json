@@ -1,0 +1,139 @@
+{
+  "description": "upstream silence preserved: non-fight rows (band flip, fall, zone entry) never produce an altercation_suspected envelope",
+  "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+  "model_versions": {
+    "detector": "gold-stub@1"
+  },
+  "policy": {
+    "severities": {
+      "fall_detected": "HIGH",
+      "altercation_suspected": "HIGH",
+      "restricted_zone_entry": "LOW",
+      "door_obstruction": "MEDIUM",
+      "overcrowding": "MEDIUM",
+      "occupancy_level_change": "LOW"
+    },
+    "overcrowding_escalates_at": 1.5,
+    "overcrowding_escalates_to": "HIGH",
+    "cooldowns_s": {
+      "fall_detected": 300.0,
+      "altercation_suspected": 180.0,
+      "overcrowding": 120.0,
+      "occupancy_level_change": 120.0,
+      "restricted_zone_entry": 600.0,
+      "door_obstruction": 300.0
+    },
+    "fight_escalation_window_s": 600.0,
+    "fight_escalation_severity": "CRITICAL"
+  },
+  "input_frames": [
+    [
+      {
+        "kind": "occupancy_level_change",
+        "camera_id": "BUS_102_CAM_04",
+        "zone": "cabin",
+        "from_band": "normal",
+        "to_band": "moderate",
+        "count": 30,
+        "ratio": 0.6,
+        "ts": 100.0
+      }
+    ],
+    [
+      {
+        "kind": "fall_detected",
+        "camera_id": "BUS_102_CAM_04",
+        "track_id": 5,
+        "ts": 130.0,
+        "confidence": 0.9
+      }
+    ],
+    [
+      {
+        "kind": "restricted_zone_entry",
+        "camera_id": "BUS_102_CAM_04",
+        "zone": "pit",
+        "track_id": 8,
+        "dwell_seconds": 6.0,
+        "first_seen_ts": 144.0,
+        "ts": 150.0
+      }
+    ]
+  ],
+  "expected_envelopes": [
+    {
+      "specversion": "1.0",
+      "id": "gold-001",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.occupancy_level_change",
+      "time": "1970-01-01T00:01:40Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "occupancy_level_change",
+        "severity": "LOW",
+        "camera_id": "BUS_102_CAM_04",
+        "location": "cabin",
+        "tracks": [],
+        "confidence": 1.0,
+        "timestamp": "1970-01-01T00:01:40Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        },
+        "from_band": "normal",
+        "to_band": "moderate",
+        "count": 30,
+        "ratio": 0.6
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "gold-002",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.fall_detected",
+      "time": "1970-01-01T00:02:10Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "fall_detected",
+        "severity": "HIGH",
+        "camera_id": "BUS_102_CAM_04",
+        "location": null,
+        "tracks": [
+          5
+        ],
+        "confidence": 0.9,
+        "timestamp": "1970-01-01T00:02:10Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        }
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "gold-003",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.restricted_zone_entry",
+      "time": "1970-01-01T00:02:30Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "restricted_zone_entry",
+        "severity": "LOW",
+        "camera_id": "BUS_102_CAM_04",
+        "location": "pit",
+        "tracks": [
+          8
+        ],
+        "confidence": 1.0,
+        "timestamp": "1970-01-01T00:02:30Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        },
+        "dwell_seconds": 6.0,
+        "first_seen_ts": 144.0
+      }
+    }
+  ],
+  "expected_suppressed": {}
+}

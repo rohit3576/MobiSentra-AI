@@ -1,0 +1,150 @@
+{
+  "description": "one alert per track per cooldown; suppression counting; re-arm after cooldown expiry; different track = different incident",
+  "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+  "model_versions": {
+    "detector": "gold-stub@1"
+  },
+  "policy": {
+    "severities": {
+      "fall_detected": "HIGH",
+      "altercation_suspected": "HIGH",
+      "restricted_zone_entry": "LOW",
+      "door_obstruction": "MEDIUM",
+      "overcrowding": "MEDIUM",
+      "occupancy_level_change": "LOW"
+    },
+    "overcrowding_escalates_at": 1.5,
+    "overcrowding_escalates_to": "HIGH",
+    "cooldowns_s": {
+      "fall_detected": 300.0,
+      "altercation_suspected": 180.0,
+      "overcrowding": 120.0,
+      "occupancy_level_change": 120.0,
+      "restricted_zone_entry": 600.0,
+      "door_obstruction": 300.0
+    },
+    "fight_escalation_window_s": 600.0,
+    "fight_escalation_severity": "CRITICAL"
+  },
+  "input_frames": [
+    [
+      {
+        "kind": "fall_detected",
+        "camera_id": "BUS_102_CAM_04",
+        "track_id": 27,
+        "ts": 100.0,
+        "confidence": 0.91
+      }
+    ],
+    [
+      {
+        "kind": "fall_detected",
+        "camera_id": "BUS_102_CAM_04",
+        "track_id": 27,
+        "ts": 110.0,
+        "confidence": 0.91
+      }
+    ],
+    [
+      {
+        "kind": "fall_detected",
+        "camera_id": "BUS_102_CAM_04",
+        "track_id": 27,
+        "ts": 200.0,
+        "confidence": 0.91
+      }
+    ],
+    [
+      {
+        "kind": "fall_detected",
+        "camera_id": "BUS_102_CAM_04",
+        "track_id": 27,
+        "ts": 500.0,
+        "confidence": 0.91
+      }
+    ],
+    [
+      {
+        "kind": "fall_detected",
+        "camera_id": "BUS_102_CAM_04",
+        "track_id": 31,
+        "ts": 520.0,
+        "confidence": 0.88
+      }
+    ]
+  ],
+  "expected_envelopes": [
+    {
+      "specversion": "1.0",
+      "id": "gold-001",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.fall_detected",
+      "time": "1970-01-01T00:01:40Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "fall_detected",
+        "severity": "HIGH",
+        "camera_id": "BUS_102_CAM_04",
+        "location": null,
+        "tracks": [
+          27
+        ],
+        "confidence": 0.91,
+        "timestamp": "1970-01-01T00:01:40Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        }
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "gold-002",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.fall_detected",
+      "time": "1970-01-01T00:08:20Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "fall_detected",
+        "severity": "HIGH",
+        "camera_id": "BUS_102_CAM_04",
+        "location": null,
+        "tracks": [
+          27
+        ],
+        "confidence": 0.91,
+        "timestamp": "1970-01-01T00:08:20Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        }
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "gold-003",
+      "source": "/mobisentra/edge/BUS_102/BUS_102_CAM_04",
+      "type": "org.mobisentra.event.fall_detected",
+      "time": "1970-01-01T00:08:40Z",
+      "datacontenttype": "application/json",
+      "data": {
+        "event_type": "fall_detected",
+        "severity": "HIGH",
+        "camera_id": "BUS_102_CAM_04",
+        "location": null,
+        "tracks": [
+          31
+        ],
+        "confidence": 0.88,
+        "timestamp": "1970-01-01T00:08:40Z",
+        "evidence_ref": null,
+        "model_versions": {
+          "detector": "gold-stub@1"
+        }
+      }
+    }
+  ],
+  "expected_suppressed": {
+    "fall_detected/27": 2
+  }
+}
