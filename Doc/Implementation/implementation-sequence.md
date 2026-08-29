@@ -36,7 +36,7 @@ Standing rules:
 | 4 | Fall Detection | ≥ 90% UR Fall; < 2 FP/hr | 🟡 In progress — 4.1–4.5 done (4.5: **93.3% detection ✅**; FP blocked on mattress-lie hard negatives); 4.6 option (a) shipped 2026-08-27 (REST zones suppress falls in beds/berths — FP 9→6 with auto-marked zones, mechanism unit-proven, definitive number needs human-marked polygons); remaining: FP closure decision + `phase-4-completion.md` |
 | 5 | Altercation Detection | ≥ 85% fight clips; 0 alerts on 30 min normal footage | 🟡→❎ Executed 2026-08-28, **closed 2026-08-29 by owner decision (c) "accept documented limitation"** (Gate-4 FP-fork precedent): fight path built/wired/tested (235+4 suite), but Gate 5 numeric criteria unmet (UBI 11/40 full-length, 5/35 windowed vs ≥85%; negatives 22 alerts/42.4 min vs 0 — assist+crowd clean). Negative suite ✅ committed. Tuning deferred to Phase 10 data loop; windowed protocol (~5 min/run) reserved. Evidence in runs/*.json → [phase-5-completion.md](./phase-5-completion.md) |
 | 6 | Event Engine + Severity | golden-file tests pass | ✅ **PASSED 2026-08-29** — 6.1a–6.4 all ✅; Gate 6 ticked (4 reviewed goldens byte-exact + purity guard + all-outputs schema-valid incl. production smoke 55/55); suite 327+4, ruff clean; report: `phase-6-completion.md` |
-| 7 | Edge Messaging | 10-min blackout → zero loss, zero dupes | 🟡 In progress — 7.1a–7.3b ✅ + **7.4a ✅** (fault-injection suite: kill mid-stream, partition FIFO, PUBACK-lost at-least-once/exactly-once, crash recovery — 5/5 in 0.06s, no broker); remaining 7.4b gate soak = Gate 7 evidence |
+| 7 | Edge Messaging | 10-min blackout → zero loss, zero dupes | ✅ **PASSED 2026-08-29** — 7.1a–7.4b all ✅; Gate 7 ticked via 13-min soak (`runs/messaging-soak.json`, run 4ed37729: 10-min blackout, 144/144 zero-loss, dupes collapsed by id-dedupe, kafka kill/restore clean); suite 369+4 edge, 15/15 bridge; report: `phase-7-completion.md` |
 | 8 | Backend Services | restart-safe consumer; event < 1 s to dashboard | ☐ Not started |
 | 9 | Dashboard | e2e demo < 2 s → **tag v0.1.0** | ☐ Not started |
 | 10 | MLOps + Edge (stretch) | registry-driven deploy; drift monitors live | ☐ Not started |
@@ -470,9 +470,9 @@ Standing rules:
 - **Done when:** all three scenarios pass at the edge layer.
 
 ### GATE 7 — Messaging
-- [ ] 10-minute network blackout during active events → all events arrive post-reconnect
-- [ ] Zero loss, zero duplicates after dedupe
-- [ ] Broker kill/restore mid-stream: no crash, full replay
+- [x] 10-minute network blackout during active events → all events arrive post-reconnect ✅ 2026-08-29 soak run `4ed37729`: 120 events spooled during the 10-min EMQX blackout, all 144/144 in Kafka after reconnect (`runs/messaging-soak.json`)
+- [x] Zero loss, zero duplicates after dedupe ✅ lost=0, unexpected=0; 6 wire redeliveries (at-least-once) collapsed to zero duplicates by id-dedupe; spool dropped=0
+- [x] Broker kill/restore mid-stream: no crash, full replay ✅ Kafka killed during active publishing → bridge backpressure engaged, stack healthy post-run, 0 loss through the epoch
 
 ---
 

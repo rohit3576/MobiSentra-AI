@@ -1,7 +1,7 @@
 # Phase 7 — Edge Messaging: Spool → MQTT → Bridge → Kafka · Plan
 
-> **Status: APPROVED 2026-08-29 (owner: "apprved" — defaults locked as
-> proposed); execution one-by-one per the working agreement.**
+> **Status: EXECUTED + CLOSED 2026-08-29 — Gate 7 PASSED 3/3 via the
+> one-shot soak (see `phase-7-completion.md`).**
 > Source of truth: `implementation-sequence.md` Phase 7 (on conflict, the
 > runbook + `implementation-plan.md` §2 win).
 > **No owner-input steps** (no creds, no datasets). Environment prerequisite
@@ -104,11 +104,11 @@ edge side sequentially clean).
 |---|---|---|
 | (a) broker kill mid-stream = transport raises/disconnects during active publishing → no crash, rows retained, replay on "reconnect"; (b) partition = extended unreachable window with continued enqueue → backlog drains FIFO after; (c) forced duplicate delivery (QoS 1 at-least-once: PUBACK lost → broker redelivers) → publisher idempotence (already-sent id from spool state) and no spool re-send | `edge/tests/test_messaging_resilience.py` | ✅ **5/5 in 0.06 s** (suite 364→369, ruff clean) — no real broker, no sleeps, deterministic manual drains. **(a) kill mid-stream:** healthy epoch delivers; broker dies → publishes keep flowing (no crash), repeated drain ticks all fail cleanly, wire untouched, 3 rows retained; heal → replay in order, spool empty. **(b) partition-from-t0** (the lazy-connect blackout path): 3 batches × 3 with failed ticks between → zero wire leakage during the partition, 9-deep backlog drains strict FIFO in one reconnect pass. **(c) PUBACK lost:** the wire sees 2 sends (at-least-once, recorded by the broker-side stub), the spool holds exactly 1 record ever — redelivery acked once, no third send, re-enqueue refused (the Phase-8 dedupe anchor). **Crash-recovery narrative:** partition → process death (no graceful stop) → fresh spool+publisher on the same disk → 5-row backlog replays FIFO. **Partial delivery:** broker dying mid-batch never loses delivered-so-far acks. Transport = `FlakyTransport` (down epochs + per-id PUBACK loss that records the broker-side receipt — the honest at-least-once shape) |
 
-### 7.4b — Gate-7 evidence run (real stack; one-shot, recorded)
+### 7.4b — Gate-7 evidence run (real stack; one-shot, recorded) ✅ 2026-08-29
 
 | Do | Files | Done when |
 |---|---|---|
-| `tools/messaging_soak.py`: drives the publisher with scripted envelopes; phases = steady stream → **blackout** (publisher network cut / EMQX stopped `--minutes`, default 10 for the gate; CI never runs this) → reconnect → broker kill/restore mid-stream; consumes Kafka at the end; writes JSON evidence (sent ids, received ids, dupes, timeline) + asserts zero loss / full replay | `edge/tools/messaging_soak.py` + `edge/runs/messaging-soak.json` (evidence, gitignored dir) | Gate-7 table filled: 10-min blackout → all arrive post-reconnect; kill/restore → no crash, full replay; duplicates = 0 after id-dedupe of the received stream |
+| `tools/messaging_soak.py`: drives the publisher with scripted envelopes; phases = steady stream → **blackout** (publisher network cut / EMQX stopped `--minutes`, default 10 for the gate; CI never runs this) → reconnect → broker kill/restore mid-stream; consumes Kafka at the end; writes JSON evidence (sent ids, received ids, dupes, timeline) + asserts zero loss / full replay | `edge/tools/messaging_soak.py` + `edge/runs/messaging-soak.json` (evidence, gitignored dir) | ✅ **Gate 7 PASSED** — gate run `4ed37729` (≈13 min): steady 4 → **10-min EMQX blackout with active events: 120 spooled, zero wire leakage** → reconnect replay (pending 120→0) → **Kafka kill mid-stream** (bridge backpressure epoch, no crash) → recovery → **144/144 in Kafka, lost=0, unexpected=0; 6 wire redeliveries (at-least-once, honest) collapsed to 0 duplicates by id-dedupe; order preserved; spool dropped=0; stack healthy after**. Rehearsal first (`--blackout-min 1`, PASS — also exposed the EMQX-restart convergence latency: replay needs ~40-90 s for paho reconnect + broker boot; the gate run's 90 s recovery window absorbed it; system self-recovers, never loses). Evidence at `runs/messaging-soak.json` (timeline + counts + loss/dupes + verdict); rehearsal evidence alongside |
 
 ## Gate 7 — checklist (from the runbook)
 
