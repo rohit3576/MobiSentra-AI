@@ -1,13 +1,16 @@
-"""Per-frame pipeline pieces (Phase 3 wiring).
+"""Per-frame pipeline pieces (Phase 3 wiring; event engine since Phase 6).
 
 Everything the run loop calls per camera: accumulator state, attach steps
-(detection, analytics), single-frame processing (detect → track → zone
-analytics → event sink → overlays), and the per-minute metrics rollup.
-``main.py`` owns CLI + lifecycle; this module owns frame handling.
+(detection, analytics, event engine), single-frame processing (detect →
+track → zone analytics → raw rows + debounced CloudEvents envelopes →
+overlays), and the per-minute metrics rollup. ``main.py`` owns CLI +
+lifecycle; this module owns frame handling and composition.
 """
 
 from __future__ import annotations
 
+import hashlib
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -30,6 +33,8 @@ class CameraAccumulator:
     debug_sink: object | None = None
     analytics: object | None = None
     event_sink: object | None = None
+    event_engine: object | None = None
+    envelope_sink: object | None = None
 
 
 @dataclass
@@ -62,19 +67,60 @@ def attach_detection(accs: list[CameraAccumulator], det_cfg: dict, debug: bool) 
             acc.debug_sink = (debug_dir / f"{acc.camera.id}.jsonl").open("w")
 
 
-def attach_analytics(accs: list[CameraAccumulator]) -> None:
+def build_model_versions(
+    det_cfg: Mapping[str, object], action_onnx: Path | None = None
+) -> dict[str, str]:
+    """Stamp what actually runs (runbook 6.3): the detector/pose model from
+    the detection config, plus the action ONNX as ``name@sha8`` when a fight
+    path is wired (benchmarks wire it today; production wiring lands with
+    the fight enablement). Config-declared versions would drift from
+    reality — derive, don't declare."""
+    versions = {"detector": str(det_cfg.get("model") or "unspecified")}
+    if action_onnx is not None:
+        if not action_onnx.is_file():
+            raise ValueError(f"action model not found: {action_onnx}")
+        digest = hashlib.sha256(action_onnx.read_bytes()).hexdigest()[:8]
+        versions["action"] = f"{action_onnx.stem}@{digest}"
+    return versions
+
+
+def attach_analytics(
+    accs: list[CameraAccumulator],
+    det_cfg: dict,
+    severity_path: Path = Path("configs/severity.yaml"),
+) -> None:
     from mobisentra.analytics.engine import CameraAnalytics
+    from mobisentra.events.engine import EventEngine
+    from mobisentra.events.envelope import EnvelopeBuilder
+    from mobisentra.events.severity import SeverityConfigError, load_severity_policy, make_resolver
     from mobisentra.events.sink import JsonlEventWriter
 
+    if not severity_path.is_file():
+        raise SystemExit(f"severity config not found: {severity_path}")
+    try:
+        policy = load_severity_policy(severity_path)
+    except SeverityConfigError as exc:
+        raise SystemExit(str(exc)) from exc
+    model_versions = build_model_versions(det_cfg)
     events_dir = Path("runs/events")
     evidence_dir = Path("runs/evidence")
     for acc in accs:
         acc.analytics = CameraAnalytics(acc.camera, history=acc.history, evidence_root=evidence_dir)
         acc.event_sink = JsonlEventWriter(events_dir / f"{acc.camera.id}.jsonl")
+        acc.event_engine = EventEngine(
+            builder=EnvelopeBuilder(
+                source=f"/mobisentra/edge/{acc.camera.vehicle_id}/{acc.camera.id}",
+                model_versions=model_versions,
+            ),
+            policy=policy.debounce(),
+            resolver=make_resolver(policy),
+        )
+        acc.envelope_sink = JsonlEventWriter(events_dir / f"{acc.camera.id}.envelopes.jsonl")
     if accs:
         summary = ", ".join(f"{acc.camera.id} ({len(acc.camera.zones)} zone(s))" for acc in accs)
         print(
-            f"[main] analytics: {summary}; events -> {events_dir}/<camera_id>.jsonl; "
+            f"[main] analytics: {summary}; rows -> {events_dir}/<camera_id>.jsonl; "
+            f"envelopes -> {events_dir}/<camera_id>.envelopes.jsonl; "
             f"evidence -> {evidence_dir}/<camera_id>/"
         )
 
@@ -105,6 +151,9 @@ def run_frame(acc: CameraAccumulator, frame, detect: bool, draw_on: np.ndarray |
         if acc.event_sink is not None:
             for row in event_rows:
                 acc.event_sink.write(row)
+        if acc.event_engine is not None and acc.envelope_sink is not None:
+            for envelope in acc.event_engine.process(event_rows):
+                acc.envelope_sink.write(envelope)
     if acc.debug_sink is not None:
         import json
 

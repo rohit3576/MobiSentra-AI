@@ -1,14 +1,15 @@
-"""JSONL event sink (Phase 3, Day 4).
+"""JSONL event sinks (Phase 3 Day 4; envelopes since Phase 6).
 
-One file per camera at ``runs/events/<camera_id>.jsonl`` (gitignored).
-Rows are internal candidate events — Phase 6 wraps them into CloudEvents
-envelopes with severity; Phase 7 ships them over MQTT. Each line is
-flushed so a live ``tail -f`` follows events during a run.
+One file per camera under ``runs/events/`` (gitignored): candidate rows at
+``<camera_id>.jsonl`` and CloudEvents envelopes at
+``<camera_id>.envelopes.jsonl``. Each line is flushed so a live ``tail -f``
+follows events during a run.
 """
 
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TextIO, TypedDict
 
@@ -43,8 +44,9 @@ class JsonlEventWriter:
         path.parent.mkdir(parents=True, exist_ok=True)
         self._file: TextIO = path.open("w")
 
-    def write(self, row: EventRow) -> None:
-        self._file.write(json.dumps(row) + "\n")
+    def write(self, payload: Mapping[str, object]) -> None:
+        """Append one JSON line — candidate ``EventRow`` or envelope dict."""
+        self._file.write(json.dumps(payload) + "\n")
         self._file.flush()
 
     def close(self) -> None:

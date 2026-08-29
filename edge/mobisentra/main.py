@@ -55,6 +55,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--detection-config", type=Path, default=Path("configs/detection.yaml"))
     parser.add_argument(
+        "--severity-config",
+        type=Path,
+        default=Path("configs/severity.yaml"),
+        help="severity + debounce policy (Phase 6)",
+    )
+    parser.add_argument(
         "--debug-detections",
         action="store_true",
         help="write per-frame detection JSONL to runs/debug/",
@@ -104,7 +110,11 @@ def run(argv: list[str] | None = None) -> int:
             load_detection_config(args.detection_config),
             debug=args.debug_detections,
         )
-        attach_analytics(accs)
+        attach_analytics(
+            accs,
+            load_detection_config(args.detection_config),
+            severity_path=args.severity_config,
+        )
 
     stopped = {"flag": False}
 
