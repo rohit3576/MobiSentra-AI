@@ -1,6 +1,7 @@
 # Phase 7 — Edge Messaging: Spool → MQTT → Bridge → Kafka · Plan
 
-> **Status: DRAFT — awaiting owner approval (per-phase working agreement).**
+> **Status: APPROVED 2026-08-29 (owner: "apprved" — defaults locked as
+> proposed); execution one-by-one per the working agreement.**
 > Source of truth: `implementation-sequence.md` Phase 7 (on conflict, the
 > runbook + `implementation-plan.md` §2 win).
 > **No owner-input steps** (no creds, no datasets). Environment prerequisite
@@ -61,11 +62,11 @@ Proposed execution order: **7.1a → 7.1b → 7.1c → 7.2 → 7.3a → 7.3b →
 7.4a → 7.4b** (7.3a can run any time after 7.1a; kept late to keep the
 edge side sequentially clean).
 
-### 7.1a — SQLite spool (no owner input)
+### 7.1a — SQLite spool (no owner input) ✅ 2026-08-29
 
 | Do | Files | Done when |
 |---|---|---|
-| `SpoolQueue`: WAL-mode SQLite at `runs/spool/<camera or edge>.db` (single edge-wide spool — one vehicle, one queue); schema per runbook (`id` PK, `topic`, `payload`, `created_at`, `sent`); `enqueue` (INSERT OR IGNORE — duplicate `id` is a counted no-op), `pending(batch)` in insertion order, `mark_sent(ids)`, `stats()` (pending/total/dropped); retention cap with drop-oldest + dropped counter | `edge/mobisentra/messaging/spool.py` + `tests/test_spool.py` | unit tests (tmp file): enqueue/pending/mark round-trip; duplicate id → one row + counted; cap drops oldest; stats correct; survives reopen (crash surrogate) |
+| `SpoolQueue`: WAL-mode SQLite at `runs/spool/<camera or edge>.db` (single edge-wide spool — one vehicle, one queue); schema per runbook (`id` PK, `topic`, `payload`, `created_at`, `sent`); `enqueue` (INSERT OR IGNORE — duplicate `id` is a counted no-op), `pending(batch)` in insertion order, `mark_sent(ids)`, `stats()` (pending/total/dropped); retention cap with drop-oldest + dropped counter | `edge/mobisentra/messaging/spool.py` + `tests/test_spool.py` | ✅ **11/11 tests green** (suite 327→338, ruff clean): FIFO round-trip incl. continuation after partial sends; batch sizing; duplicate id → one row + `enqueue` False; **dedupe survives sends** (at-least-once replay of a sent id never re-queues); `mark_sent` idempotent; cap drops oldest with persisted dropped-counter; **crash surrogate** — reopen → rows, order, counter intact; field/batch/cap validation. Design notes: (1) thread-safety built in now (`check_same_thread=False` + lock) so the 7.1b paho callback thread needs no rework; (2) SQLite cannot index `rowid` — the 100k cap bounds pending scans to ms at drain-tick frequency, so no sequence column (documented in-module); (3) dropped-counter persists in `spool_meta` (survives restarts, part of stats) |
 
 ### 7.1b — MQTT publisher, write-ahead + replay (consumes 7.1a)
 
