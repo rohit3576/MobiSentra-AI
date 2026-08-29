@@ -164,6 +164,82 @@ class TestEvidenceWriter:
         assert self.writer(tmp_path).enforce_retention("CAM_NONE") == []
 
 
+class TestGeneralizedWriteClip:
+    """Phase 6, Step 6.3b — one writer for every event kind; the legacy fall
+    entry must keep producing the exact Phase-4 stems and sidecar fields."""
+
+    def writer(self, tmp_path: Path, config: EvidenceConfig | None = None) -> EvidenceWriter:
+        return EvidenceWriter(tmp_path, config or EvidenceConfig())
+
+    def test_legacy_fall_entry_stem_unchanged(self, tmp_path: Path):
+        path = self.writer(tmp_path).write_fall_clip(
+            camera_id="CAM_A", track_id=7, trigger_ts=12.0,
+            frames=[(11.0, frame(10))], pose_samples=[pose_sample(11.0)],
+        )
+        assert path.name == "fall_track7_t12000.mp4"
+        assert path.is_file()
+
+    def test_legacy_fall_sidecar_keeps_phase4_fields(self, tmp_path: Path):
+        path = self.writer(tmp_path).write_fall_clip(
+            camera_id="CAM_A", track_id=7, trigger_ts=1.0,
+            frames=[(0.0, frame(10))], pose_samples=[pose_sample(0.0)],
+        )
+        payload = json.loads(path.with_suffix(".keypoints.json").read_text())
+        assert payload["track_id"] == 7
+        assert payload["kind"] == "fall"
+        assert payload["tracks"] == [7]
+        assert payload["camera_id"] == "CAM_A"
+
+    def test_fight_clip_names_both_tracks_and_is_playable(self, tmp_path: Path):
+        frames = [(float(i), frame(i * 25)) for i in range(5)]
+        path = self.writer(tmp_path).write_clip(
+            kind="fight", camera_id="CAM_B", tracks=[11, 4], trigger_ts=3.0,
+            frames=frames, pose_samples=[pose_sample(2.9)],
+        )
+        assert path.name == "fight_track11-track4_t3000.mp4"
+        count, _ = reopen_frame_count(path)
+        assert count == 5
+
+    def test_fight_sidecar_has_kind_tracks_no_legacy_singular(self, tmp_path: Path):
+        path = self.writer(tmp_path).write_clip(
+            kind="fight", camera_id="CAM_B", tracks=[4, 11], trigger_ts=3.0,
+            frames=[(2.0, frame(10))], pose_samples=[pose_sample(2.0)],
+        )
+        payload = json.loads(path.with_suffix(".keypoints.json").read_text())
+        assert payload["kind"] == "fight"
+        assert payload["tracks"] == [4, 11]
+        assert "track_id" not in payload
+
+    def test_empty_fight_window_writes_sidecar_only(self, tmp_path: Path):
+        path = self.writer(tmp_path).write_clip(
+            kind="fight", camera_id="CAM_B", tracks=[1, 2], trigger_ts=9.0,
+            frames=[], pose_samples=[],
+        )
+        assert path.suffix == ".json"
+        assert path.is_file()
+
+    def test_retention_spans_both_kinds(self, tmp_path: Path):
+        writer = self.writer(tmp_path, EvidenceConfig(max_clips_per_camera=2))
+        writer.write_fall_clip(
+            camera_id="CAM_A", track_id=1, trigger_ts=1.0,
+            frames=[(1.0, frame(10))], pose_samples=[pose_sample(1.0)],
+        )
+        writer.write_clip(
+            kind="fight", camera_id="CAM_A", tracks=[1, 2], trigger_ts=2.0,
+            frames=[(2.0, frame(20))], pose_samples=[pose_sample(2.0)],
+        )
+        writer.write_fall_clip(
+            camera_id="CAM_A", track_id=3, trigger_ts=3.0,
+            frames=[(3.0, frame(30))], pose_samples=[pose_sample(3.0)],
+        )
+        removed = writer.enforce_retention("CAM_A")
+        remaining = sorted((tmp_path / "CAM_A").glob("*.mp4"))
+        assert len(remaining) == 2
+        assert len(removed) == 1
+        assert "fight" in removed[0].name or "fall" in removed[0].name
+        assert len(list((tmp_path / "CAM_A").glob("*.keypoints.json"))) == 2
+
+
 class TestFpsDerivation:
     @pytest.mark.parametrize(
         ("deltas", "expected"),

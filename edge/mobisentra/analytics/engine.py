@@ -11,8 +11,8 @@ row carries a playable ``evidence_ref`` clip. Tracks inside a REST zone
 deliberate lie-down there is not a fall event. With an
 ``action_scorer_factory`` the Phase 5 fight path runs beside fall:
 ``PairFinder`` candidates → per-pair ``ActionScorer`` on the union crop →
-``FightDetector`` four-signal fusion → ``altercation_suspected`` rows
-(no clip yet — the writer's pair-clip generalization rides Phase 6).
+``FightDetector`` four-signal fusion → ``altercation_suspected`` rows with
+pair evidence clips (Phase 6, 6.3b — the writer generalization).
 ``process`` returns JSONL-ready rows; ``draw_overlay`` renders zone
 boundaries for ``--preview``.
 """
@@ -38,7 +38,7 @@ from mobisentra.events.evidence import EvidenceBuffer, EvidenceConfig, EvidenceW
 from mobisentra.events.sink import EventRow
 from mobisentra.ingestion.config import CameraConfig, ZoneType
 from mobisentra.vision.action import ActionScorer
-from mobisentra.vision.track_history import TrackHistory
+from mobisentra.vision.track_history import PoseSample, TrackHistory
 from mobisentra.vision.tracker import TrackedPerson
 
 ZONE_COLORS: Final[dict[ZoneType, tuple[int, int, int]]] = {
@@ -222,7 +222,7 @@ class CameraAnalytics:
         return frame[y1:y2, x1:x2]
 
     def _fight_row(self, candidate: FightCandidate) -> EventRow:
-        return EventRow(
+        row = EventRow(
             kind=FIGHT_EVENT_KIND,
             camera_id=self._camera_id,
             track_a=candidate.track_a,
@@ -232,6 +232,28 @@ class CameraAnalytics:
             confidence=candidate.confidence,
             action_score=candidate.action_score,
         )
+        if self._evidence_writer is not None:
+            start_ts = candidate.trigger_ts - self._evidence_config.pre_trigger_seconds
+            frames = self._evidence_buffer.snapshot(start_ts)
+            pose_samples: list[PoseSample] = []
+            if self._history is not None:
+                for track_id in (candidate.track_a, candidate.track_b):
+                    pose_samples.extend(
+                        sample
+                        for sample in self._history.pose_history(track_id)
+                        if sample.ts >= start_ts
+                    )
+            path = self._evidence_writer.write_clip(
+                kind="fight",
+                camera_id=self._camera_id,
+                tracks=[candidate.track_a, candidate.track_b],
+                trigger_ts=candidate.trigger_ts,
+                frames=frames,
+                pose_samples=pose_samples,
+            )
+            self._evidence_writer.enforce_retention(self._camera_id)
+            row["evidence_ref"] = str(path)
+        return row
 
     def _fall_row(self, candidate: FallCandidate, track_id: int) -> EventRow:
         row = EventRow(

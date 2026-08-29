@@ -2,8 +2,9 @@
 
 ``EvidenceBuffer`` keeps the last ``buffer_seconds`` of analyzed frames per
 camera as JPEG-compressed, optionally downscaled images (memory-bounded —
-raw 720p × 5 s × 10 fps would be ~100 MB; JPEG ~5 MB). When the fall
-cascade fires, ``EvidenceWriter`` muxes the window
+raw 720p × 5 s × 10 fps would be ~100 MB; JPEG ~5 MB). When a cascade
+fires (fall since Phase 4; the fight pair since Phase 6/6.3b),
+``EvidenceWriter`` muxes the window
 [trigger − pre_trigger_seconds, fire] into an MP4 (PyAV/libx264 — decoders
 agree with cv2, unlike browsers-hostile raw MJPEG) and writes the matching
 keypoint samples to a ``.keypoints.json`` sidecar next to the clip, under
@@ -118,31 +119,56 @@ class EvidenceWriter:
         frames: list[tuple[float, np.ndarray]],
         pose_samples: list[PoseSample],
     ) -> Path:
-        """Write the clip (if any frames) + sidecar; returns the clip path,
-        or the sidecar path when the frame window was empty."""
+        """Legacy single-track entry (Phase 4) — same stems, clip bytes, and
+        sidecar fields as before; delegates to the general :meth:`write_clip`."""
+        return self.write_clip(
+            kind="fall",
+            camera_id=camera_id,
+            tracks=[track_id],
+            trigger_ts=trigger_ts,
+            frames=frames,
+            pose_samples=pose_samples,
+        )
+
+    def write_clip(
+        self,
+        *,
+        kind: str,
+        camera_id: str,
+        tracks: list[int],
+        trigger_ts: float,
+        frames: list[tuple[float, np.ndarray]],
+        pose_samples: list[PoseSample],
+    ) -> Path:
+        """Write the clip (if any frames) + keypoints sidecar for one event
+        kind (``fall`` = single track, ``fight`` = the pair); returns the clip
+        path, or the sidecar path when the frame window was empty. The sidecar
+        carries ``kind`` + ``tracks``; single-track clips also keep the legacy
+        ``track_id`` field (Phase-4 consumers)."""
         camera_dir = self._root / camera_id
         camera_dir.mkdir(parents=True, exist_ok=True)
-        stem = f"fall_track{track_id}_t{int(round(trigger_ts * 1000))}"
+        subjects = "-".join(f"track{track_id}" for track_id in tracks)
+        stem = f"{kind}_{subjects}_t{int(round(trigger_ts * 1000))}"
         fps = fps_from_timestamps([ts for ts, _ in frames])
-        sidecar = camera_dir / f"{stem}.keypoints.json"
-        sidecar.write_text(
-            json.dumps(
+        sidecar_payload: dict[str, object] = {
+            "camera_id": camera_id,
+            "kind": kind,
+            "tracks": list(tracks),
+            "trigger_ts": trigger_ts,
+            "fps": fps,
+            "samples": [
                 {
-                    "camera_id": camera_id,
-                    "track_id": track_id,
-                    "trigger_ts": trigger_ts,
-                    "fps": fps,
-                    "samples": [
-                        {
-                            "ts": sample.ts,
-                            "bbox": list(sample.bbox),
-                            "keypoints": [[x, y, c] for x, y, c in sample.keypoints],
-                        }
-                        for sample in pose_samples
-                    ],
+                    "ts": sample.ts,
+                    "bbox": list(sample.bbox),
+                    "keypoints": [[x, y, c] for x, y, c in sample.keypoints],
                 }
-            )
-        )
+                for sample in pose_samples
+            ],
+        }
+        if len(tracks) == 1:
+            sidecar_payload["track_id"] = tracks[0]
+        sidecar = camera_dir / f"{stem}.keypoints.json"
+        sidecar.write_text(json.dumps(sidecar_payload))
         if not frames:
             return sidecar
 

@@ -8,7 +8,7 @@ Execution runbooks for building MobiSentra AI, in strict sequence.
 |---|---|
 | [`implementation-sequence.md`](./implementation-sequence.md) | **THE runbook** — every step in execution order, with commands, files, and gates. Start here. |
 | [`phase-4-plan.md`](./phase-4-plan.md) | Phase 4 (fall detection) design plan — 4.1–4.5 executed (evidence clips, UR Fall benchmark: 93.3% detection, FP hard-negative analysis, gate verdict + owner decision pending); 4.6 fold remains |
-| [`phase-6-plan.md`](./phase-6-plan.md) | Phase 6 (event engine + severity) design plan — **APPROVED 2026-08-29, executing one-by-one**; 6.1a–6.2 ✅ + **6.3a ✅** (run-loop wiring + model_versions; production smoke all-schema-valid; suite 315+4); remaining 6.3b (fight evidence clips) + 6.4 (golden files) |
+| [`phase-6-plan.md`](./phase-6-plan.md) | Phase 6 (event engine + severity) design plan — **APPROVED 2026-08-29, executing one-by-one**; 6.1a–6.3a ✅ + **6.3b ✅** (fight pair evidence clips, fall byte-identical; suite 323+4); remaining 6.4 golden files = Gate 6 |
 | [`phase-5-completion.md`](./phase-5-completion.md) | Phase 5 completion report — **closed 2026-08-29 by owner decision (c)**: fight path built/wired/tested (235+4 suite, 6× realtime), Gate 5 numeric criteria unmet and accepted as documented limitation; tuning deferred to Phase 10 |
 | [`phase-5-plan.md`](./phase-5-plan.md) | Phase 5 (altercation) design plan — EXECUTED + CLOSED 2026-08-28/29 (5.1–5.5 all ✅; ONNX runtime pick, UBI/Hockey sourced creds-free, windowed protocol; honest baseline recorded) |
 | [`phase-3-completion.md`](./phase-3-completion.md) | Phase 3 completion report — Gate 3 at 2/3 (empty-zone FP ✅ 30 min/0 events; occupancy verdict awaits owner's 5 manual counts) |

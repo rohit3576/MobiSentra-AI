@@ -96,3 +96,38 @@ def test_forget_propagates_to_fight_state() -> None:
     analytics.forget([1])
     assert analytics.pending_fight_pair_ids() == []
     assert analytics._scorers == {}
+
+
+def test_fight_row_carries_pair_evidence_clip(tmp_path) -> None:
+    """Phase 6, 6.3b — fight fires stamp a playable evidence_ref + sidecar
+    (the buffer runs even without a pose history)."""
+    import json
+    from pathlib import Path
+
+    analytics = CameraAnalytics(
+        CameraConfig(id="CAM_FIGHT", source="sample://videos/f.mp4", vehicle_id="V", zones={}),
+        action_scorer_factory=high_score_factory,
+        evidence_root=tmp_path,
+    )
+    rows = feed(analytics, 30)
+    fights = [row for row in rows if row["kind"] == "altercation_suspected"]
+    assert len(fights) == 1
+    evidence_ref = fights[0].get("evidence_ref")
+    assert evidence_ref is not None
+    clip = Path(evidence_ref)
+    assert clip.name.startswith("fight_track")
+    assert clip.suffix == ".mp4"
+    assert clip.is_file()
+    sidecar = clip.with_suffix(".keypoints.json")
+    payload = json.loads(sidecar.read_text())
+    assert payload["kind"] == "fight"
+    assert sorted(payload["tracks"]) == [1, 2]
+    assert payload["samples"] == []  # no pose history in this composition
+
+
+def test_fight_row_without_writer_has_no_evidence_ref() -> None:
+    analytics = make_analytics(high_score_factory)
+    rows = feed(analytics, 30)
+    fights = [row for row in rows if row["kind"] == "altercation_suspected"]
+    assert len(fights) == 1
+    assert "evidence_ref" not in fights[0]
