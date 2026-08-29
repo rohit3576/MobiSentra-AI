@@ -14,6 +14,7 @@
 import process from "node:process";
 import mqtt from "mqtt";
 import { RdKafka } from "@confluentinc/kafka-javascript";
+import { mapTopic } from "./lib/topics.js";
 
 const MQTT_URL = process.env.MQTT_URL ?? "mqtt://localhost:1883";
 const KAFKA_BROKER = process.env.KAFKA_BROKER ?? "localhost:9092";
@@ -57,8 +58,8 @@ async function main(): Promise<void> {
   console.log(`[bridge] subscribed: ${TOPIC_PREFIX}/#`);
 
   mqttClient.on("message", (topic, payload) => {
-    if (!topic.startsWith(`${TOPIC_PREFIX}/`)) return;
-    const kafkaTopic = topic.replaceAll("/", ".");
+    const kafkaTopic = mapTopic(topic, TOPIC_PREFIX);
+    if (kafkaTopic === null) return;
     try {
       producer.produce(kafkaTopic, null, payload, "mobisentra-bridge");
       forwarded += 1;
