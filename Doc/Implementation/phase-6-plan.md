@@ -1,7 +1,7 @@
 # Phase 6 — Event Engine + Severity · Plan
 
-> **Status: DRAFT — awaiting owner approval (per-phase working agreement:
-> plan first → approve → execute steps one-by-one, each verifiable).**
+> **Status: APPROVED 2026-08-29 (owner: "ok start the phase 6.1a" — defaults
+> locked as proposed); execution one-by-one per the working agreement.**
 > Source of truth: `implementation-sequence.md` Phase 6 (on conflict, the
 > runbook + `implementation-plan.md` Phase 6 §items win).
 > **Zero owner-input steps this phase** — no datasets, no creds, no external
@@ -60,11 +60,11 @@ inside) · all outputs validate against `schemas/events/v0/`.
 Proposed execution order: **6.1a → 6.1b → 6.2 → 6.3a → 6.3b → 6.4**
 (6.3b may swap with 6.3a — no dependency either way).
 
-### 6.1a — Payload normalizer + envelope builder (pure; no owner input)
+### 6.1a — Payload normalizer + envelope builder (pure; no owner input) ✅ 2026-08-29
 
 | Do | Files | Done when |
 |---|---|---|
-| `EventPayload` normalizer: `EventRow` → v0 `data` dict (event_type, severity-from-mapper, camera_id, location=zone-or-null, tracks=[track]/[a,b], confidence (row value or rule-kind default 1.0), ISO timestamp from epoch ts, evidence_ref, model_versions) + `CloudEvent` envelope (specversion, uuid4 id via injectable id-factory, `/mobisentra/edge/<vehicle_id>/<camera_id>` source, `org.mobisentra.event.<kind>` type, time, datacontenttype). Injectable clock + id-factory (golden determinism) | `edge/mobisentra/events/envelope.py` + `edge/tests/test_envelope.py` | unit tests: every emitted kind → payload + envelope validate against the shared schemas (Draft7, `test_schemas` pattern); determinism proof (fixed clock/id-factory → byte-identical envelope); bad-input rejection (unknown kind, non-enum severity) |
+| `EventPayload` normalizer: `EventRow` → v0 `data` dict (event_type, severity-from-mapper, camera_id, location=zone-or-null, tracks=[track]/[a,b], confidence (row value or rule-kind default 1.0), ISO timestamp from epoch ts, evidence_ref, model_versions) + `CloudEvent` envelope (specversion, uuid4 id via injectable id-factory, `/mobisentra/edge/<vehicle_id>/<camera_id>` source, `org.mobisentra.event.<kind>` type, time, datacontenttype). Injectable clock + id-factory (golden determinism) | `edge/mobisentra/events/envelope.py` + `edge/tests/test_envelope.py` | ✅ **27/27 tests green** (suite 235→262, ruff clean): all 5 emitted kinds → payload + envelope validate against the shared Draft-07 schemas; determinism proof (fixed id-factory → byte-identical); rejection tests (unknown kind, non-enum severity, out-of-range confidence, missing kind/camera_id/ts, bad source); enum drift-guard (code constants == schema enums). **Design notes:** (1) *clock injection dropped* — envelope `time` is the CloudEvents *occurrence* time derived from the row's stream `ts` (never wall-clock; replay-safe for 6× realtime benchmarks), so the only nondeterminism is `id` → id-factory injection suffices; (2) `event_type` override param added for the 6.2 into-`over` → `overcrowding` mapping (tested); (3) diagnostics allowlist (from_band/to_band/count/ratio/dwell/door_state/trigger_ts/action_score) passes through for dashboards — schema `additionalProperties: true`; (4) fail-fast everywhere, no clamping (out-of-range confidence raises) |
 
 ### 6.1b — Debounce core (pure; consumes 6.1a)
 
