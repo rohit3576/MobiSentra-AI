@@ -66,8 +66,41 @@ docker compose -f infra/docker-compose.yml exec kafka \
   --from-beginning --timeout-ms 8000
 ```
 
-## Hardening (Phase 7 backlog)
+## Hardening (Phase 7.3b — shipped)
 
-- Pause MQTT consumption while Kafka producer is disconnected (backpressure)
-- Metrics: forwarded/dropped/failed counters → Prometheus
-- Duplicate suppression option at the gateway (pre-Kafka)
+- **Backpressure, lossless by construction:** when the Kafka producer goes
+  down, the bridge *disconnects* MQTT (fixed `clientId` + `clean: false` →
+  persistent session). EMQX queues QoS-1 messages for the offline session
+  and flow-controls publishers — nothing is accepted-and-lost. Messages
+  already delivered land in a bounded in-memory buffer (oldest dropped +
+  counted on overflow — never an OOM; drops are logged with totals).
+  Recovery (probe produce succeeding every 2 s) drains the buffer FIFO and
+  reconnects MQTT; the session's queued messages then flow through.
+  Broker-side queue depth during a long Kafka outage is bounded by EMQX's
+  per-session mqueue (default 1000 — tune `max_mqueue` in EMQX for longer
+  outages).
+- **Counters** every 30 s: `forwarded / dropped / suppressed / buffered / kafka up|down`.
+- **Optional pre-Kafka duplicate suppression** (OFF by default): bounded TTL
+  cache of CloudEvents ids — `DEDUPE_ENABLED=true`, `DEDUPE_TTL_MS`,
+  `DEDUPE_MAX`. The real exactly-once guarantee stays consumer-side
+  (Phase 8).
+
+### Environment variables
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `MQTT_URL` | `mqtt://localhost:1883` | broker url |
+| `KAFKA_BROKER` | `localhost:9092` | kafka bootstrap |
+| `TOPIC_PREFIX` | `mobisentra` | subscription + mapping prefix |
+| `BUFFER_MAX` | `10000` | backpressure buffer bound (messages) |
+| `DEDUPE_ENABLED` | `false` | optional pre-Kafka id suppression |
+| `DEDUPE_TTL_MS` | `60000` | suppression window |
+| `DEDUPE_MAX` | `10000` | suppression cache bound (ids) |
+| `COUNTER_INTERVAL_S` | `30` | counters log interval |
+
+### Tests
+
+```bash
+cd bridge && pnpm install && pnpm test      # vitest (topics, suppressor, buffer)
+pnpm typecheck                              # tsc --noEmit
+```
