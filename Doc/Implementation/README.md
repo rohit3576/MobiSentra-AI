@@ -8,7 +8,8 @@ Execution runbooks for building MobiSentra AI, in strict sequence.
 |---|---|
 | [`implementation-sequence.md`](./implementation-sequence.md) | **THE runbook** — every step in execution order, with commands, files, and gates. Start here. |
 | [`phase-4-plan.md`](./phase-4-plan.md) | Phase 4 (fall detection) design plan — 4.1–4.5 executed (evidence clips, UR Fall benchmark: 93.3% detection, FP hard-negative analysis, gate verdict + owner decision pending); 4.6 fold remains |
-| [`phase-5-plan.md`](./phase-5-plan.md) | Phase 5 (altercation) design plan — **APPROVED 2026-08-28; execution division ready** (5.1a–5.5c, one-by-one per working agreement; only 5.5b needs owner input = Kaggle creds, fallbacks documented); 2026-08-27 research: engares repo unlicensed (wrapper-only posture), TF/PyTorch runtime spike, dataset mirrors verified |
+| [`phase-5-completion.md`](./phase-5-completion.md) | Phase 5 completion report — **closed 2026-08-29 by owner decision (c)**: fight path built/wired/tested (235+4 suite, 6× realtime), Gate 5 numeric criteria unmet and accepted as documented limitation; tuning deferred to Phase 10 |
+| [`phase-5-plan.md`](./phase-5-plan.md) | Phase 5 (altercation) design plan — EXECUTED + CLOSED 2026-08-28/29 (5.1–5.5 all ✅; ONNX runtime pick, UBI/Hockey sourced creds-free, windowed protocol; honest baseline recorded) |
 | [`phase-3-completion.md`](./phase-3-completion.md) | Phase 3 completion report — Gate 3 at 2/3 (empty-zone FP ✅ 30 min/0 events; occupancy verdict awaits owner's 5 manual counts) |
 | [`phase-3-plan.md`](./phase-3-plan.md) | Phase 3 (zones/occupancy/door) design plan — **DRAFT, awaiting approval** |
 | [`phase-2-completion.md`](./phase-2-completion.md) | Phase 2 completion report — gate evidence, A/B tables, pending owner checklist/decision |
