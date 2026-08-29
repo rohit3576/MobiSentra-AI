@@ -10,15 +10,19 @@ lifecycle; this module owns frame handling and composition.
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from mobisentra.ingestion.config import CameraConfig
 from mobisentra.ingestion.stream_reader import RealClock, StreamReader
 from mobisentra.metrics import MinuteStats, percentile
+
+if TYPE_CHECKING:
+    from mobisentra.messaging.config import MessagingConfig
 
 
 @dataclass
@@ -35,6 +39,22 @@ class CameraAccumulator:
     event_sink: object | None = None
     event_engine: object | None = None
     envelope_sink: object | None = None
+    publisher: object | None = None
+
+
+@dataclass
+class MessagingHandle:
+    """Lifecycle handle for the edge-wide publisher (one spool, one MQTT
+    client shared by every camera). ``shutdown`` stops the drain loop,
+    attempts one final replay pass (transport still alive), then closes."""
+
+    publisher: object
+    transport: object
+
+    def shutdown(self) -> None:
+        self.publisher.stop()
+        self.publisher.drain_once()
+        self.transport.close()
 
 
 @dataclass
@@ -65,6 +85,52 @@ def attach_detection(accs: list[CameraAccumulator], det_cfg: dict, debug: bool) 
         acc.history = TrackHistory()
         if debug_dir is not None:
             acc.debug_sink = (debug_dir / f"{acc.camera.id}.jsonl").open("w")
+
+
+def attach_messaging(
+    accs: list[CameraAccumulator],
+    config: MessagingConfig,
+    *,
+    transport_factory: Callable[[MessagingConfig], object] | None = None,
+    start: bool = True,
+) -> MessagingHandle:
+    """Build the edge-wide EventPublisher (spool + transport) and attach the
+    same instance to every camera. ``transport_factory`` overrides the paho
+    adapter (tests); ``start=False`` keeps the drain loop off for
+    deterministic manual draining."""
+    from mobisentra.messaging.publisher import EventPublisher
+    from mobisentra.messaging.spool import SpoolQueue
+    from mobisentra.messaging.transport_paho import PahoTransport
+
+    if transport_factory is None:
+
+        def default_transport(cfg: MessagingConfig) -> PahoTransport:
+            return PahoTransport(
+                url=cfg.url, client_id=cfg.client_id, puback_timeout_s=cfg.puback_timeout_s
+            )
+
+        transport_factory = default_transport
+    spool = SpoolQueue(config.spool_path, max_entries=config.spool_max_entries)
+    transport = transport_factory(config)
+    publisher = EventPublisher(
+        spool=spool,
+        transport=transport,
+        topic=config.topic,
+        batch=config.replay_batch,
+        backoff_initial_s=config.backoff_initial_s,
+        backoff_max_s=config.backoff_max_s,
+    )
+    for acc in accs:
+        acc.publisher = publisher
+    if start:
+        publisher.start()
+    if accs:
+        stats = spool.stats()
+        print(
+            f"[main] messaging: {config.url} topic={config.topic} "
+            f"spool={config.spool_path} (pending {stats.pending}/{stats.total})"
+        )
+    return MessagingHandle(publisher=publisher, transport=transport)
 
 
 def build_model_versions(
@@ -151,9 +217,14 @@ def run_frame(acc: CameraAccumulator, frame, detect: bool, draw_on: np.ndarray |
         if acc.event_sink is not None:
             for row in event_rows:
                 acc.event_sink.write(row)
-        if acc.event_engine is not None and acc.envelope_sink is not None:
-            for envelope in acc.event_engine.process(event_rows):
-                acc.envelope_sink.write(envelope)
+        if acc.event_engine is not None:
+            envelopes = acc.event_engine.process(event_rows)
+            if acc.envelope_sink is not None:
+                for envelope in envelopes:
+                    acc.envelope_sink.write(envelope)
+            if acc.publisher is not None:
+                for envelope in envelopes:
+                    acc.publisher.publish(envelope)
     if acc.debug_sink is not None:
         import json
 

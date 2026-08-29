@@ -25,8 +25,10 @@ from mobisentra.ingestion.stream_reader import RealClock, StreamReader
 from mobisentra.metrics import MetricsWriter
 from mobisentra.pipeline import (
     CameraAccumulator,
+    MessagingHandle,
     attach_analytics,
     attach_detection,
+    attach_messaging,
     rollup_minute,
     run_frame,
 )
@@ -59,6 +61,17 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         default=Path("configs/severity.yaml"),
         help="severity + debounce policy (Phase 6)",
+    )
+    parser.add_argument(
+        "--messaging-config",
+        type=Path,
+        default=Path("configs/messaging.yaml"),
+        help="edge messaging policy (Phase 7; used with --publish)",
+    )
+    parser.add_argument(
+        "--publish",
+        action="store_true",
+        help="publish envelopes via MQTT QoS 1 with disk spool (needs the dev stack)",
     )
     parser.add_argument(
         "--debug-detections",
@@ -104,7 +117,20 @@ def run(argv: list[str] | None = None) -> int:
         accs.append(CameraAccumulator(camera=camera, reader=reader))
         print(f"[main] started {camera.id} ({spec.kind}: {spec.capture_arg})")
 
+    messaging: MessagingHandle | None = None
     if args.detect:
+        if args.publish:
+            from mobisentra.messaging.config import MessagingConfigError, load_messaging_config
+
+            messaging_path = args.messaging_config
+            if not messaging_path.is_file():
+                raise SystemExit(f"messaging config not found: {messaging_path}")
+            try:
+                messaging_config = load_messaging_config(messaging_path)
+            except MessagingConfigError as exc:
+                raise SystemExit(str(exc)) from exc
+            messaging = attach_messaging(accs, messaging_config)
+            print(f"[main] publishing enabled: {messaging_config.url} (Ctrl-C to stop)")
         attach_detection(
             accs,
             load_detection_config(args.detection_config),
@@ -115,6 +141,8 @@ def run(argv: list[str] | None = None) -> int:
             load_detection_config(args.detection_config),
             severity_path=args.severity_config,
         )
+    elif args.publish:
+        raise SystemExit("--publish requires --detect (envelopes only exist with analytics)")
 
     stopped = {"flag": False}
 
@@ -173,6 +201,8 @@ def run(argv: list[str] | None = None) -> int:
                 next_minute += MINUTE_S
     finally:
         print("[main] stopping readers…")
+        if messaging is not None:
+            messaging.shutdown()
         for acc in accs:
             acc.reader.stop()
             if acc.debug_sink is not None:

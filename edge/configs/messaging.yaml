@@ -1,0 +1,18 @@
+# MobiSentra edge messaging configuration (Phase 7, Step 7.1c).
+#
+# Used only when the pipeline runs with --publish (default OFF — sample
+# runs stay local, runs-without-hardware). Topic uses SLASHES: the bridge
+# maps mobisentra/events -> Kafka mobisentra.events; a dotted topic would
+# silently never match the bridge subscription (Phase-0 gotcha — the
+# loader enforces the prefix, but keep the shape in mind).
+
+url: mqtt://localhost:1883
+topic: mobisentra/events
+client_id: mobisentra-edge
+spool:
+  path: runs/spool/edge.db
+  max_entries: 100000    # drop-oldest bound (counted, never silent)
+replay_batch: 500
+backoff_initial_s: 1.0
+backoff_max_s: 60.0
+puback_timeout_s: 10.0
