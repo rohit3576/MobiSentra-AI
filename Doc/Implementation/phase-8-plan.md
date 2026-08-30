@@ -63,11 +63,11 @@ ack/escalate write audit rows.
 Proposed execution order: **8.1a → 8.1b → 8.2 → 8.3a → 8.3c → 8.3b →
 8.4a → 8.5 → 8.4b**.
 
-### 8.1a — Envelope → record mapping (pure; no owner input)
+### 8.1a — Envelope → record mapping (pure; no owner input) ✅ 2026-08-29
 
 | Do | Files | Done when |
 |---|---|---|
-| `lib/events.ts`: schema-valid envelope → typed `EventRecord` (id, source, vehicle_id + camera_id parsed from `/mobisentra/edge/{v}/{c}`, event_type, severity, timestamp, tracks, location, evidence_ref, model_versions, raw JSON); reject invalid with structured errors (reuse `schema/events.ts` validators) | `backend/src/lib/events.ts` + `test/events.test.ts` | unit: the shared-schema example + one envelope per kind round-trip; malformed envelope → structured rejection; source-parse failure → explicit fallback (vehicle `unknown`, camera from data) — never a crash |
+| `lib/events.ts`: schema-valid envelope → typed `EventRecord` (id, source, vehicle_id + camera_id parsed from `/mobisentra/edge/{v}/{c}`, event_type, severity, timestamp, tracks, location, evidence_ref, model_versions, raw JSON); reject invalid with structured errors (reuse `schema/events.ts` validators) | `backend/src/lib/events.ts` + `test/events.test.ts` | ✅ **14/14 tests green + tsc clean** (backend suite 26/26). The shared-schema example maps end-to-end (every field asserted incl. raw passthrough); one valid envelope per kind (6) round-trips; malformed → structured rejections (missing id, non-object, bad severity with the offending value, missing data.timestamp); optional fields degrade to null/[] /{} not errors; **source fallbacks proven: 4-segment source → camera from data, non-edge shape → vehicle `unknown`, bare prefix → unknown/unknown — never a crash**. Design notes: (1) validation = ajv (shared schemas, the Phase-0 freeze) THEN runtime-guarded extraction — zero casts, so schema/code drift fails loudly at the parse point instead of surfacing `undefined` downstream; (2) **camera precedence decided by the shared example itself**: `data.camera_id` (the edge registry key, what the API queries) wins over the source path segment (`BUS_102/CAM_04` vs `BUS_102_CAM_04` — they genuinely differ in the example); vehicle only exists in `source` → source-first with `unknown` fallback (comment-documented) |
 
 ### 8.1b — Kafka consumer wrapper (injectable processor) ✅ 2026-08-29 *(owner-directed first step)*
 
