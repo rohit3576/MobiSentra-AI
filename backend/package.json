@@ -7,16 +7,19 @@
   "packageManager": "pnpm@11.23.0",
   "scripts": {
     "dev": "tsx src/index.ts",
+    "migrate": "tsx src/schema/migrate.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
     "@confluentinc/kafka-javascript": "^1.10.0",
     "ajv": "^8.17.1",
-    "ioredis": "^6.0.0"
+    "ioredis": "^6.0.0",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@types/pg": "^8.23.1",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
