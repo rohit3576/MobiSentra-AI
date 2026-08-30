@@ -1,9 +1,12 @@
 # Phase 9 — Dashboard · Plan
 
-> **Status: DRAFT, awaiting owner approval** (working agreement: plan →
-> approve → execute one-by-one). Planning done ahead of Phase-8 completion
-> on purpose — **two Phase-8 amendments below must be approved WITH this
-> plan** so the not-yet-built 8.3b/8.4a land them right the first time.
+> **Status: APPROVED 2026-08-30** (working agreement: plan → approve →
+> execute one-by-one). Owner decisions at approval: **9.6 auth dropped
+> entirely**, occupancy thresholds approved as proposed, analytics
+> Redis-only, demo replay tool yes. Planning done ahead of Phase-8
+> completion on purpose — the two Phase-8 amendments below were approved
+> WITH this plan so the not-yet-built 8.3b/8.4a land them right the
+> first time.
 > **Execution of Phase 9 starts only after Gate 8 passes** (house rule).
 > Source of truth: `implementation-sequence.md` Phase 9 + `implementation-plan.md`
 > Phase-9 section (on conflict, the locked plan wins).
@@ -51,11 +54,9 @@ they are scope-locked here so the backend lands once.
 **Dependency / blocking map:**
 
 ```
-Gate 8 passed ──→ 9.1a scaffold ──→ 9.1b live feed (<1 s) ──→ 9.3 incidents+ack/escalate ──→ 9.4 detail+evidence [A2]
-                          │                                                                              │
-                          └──→ 9.2 camera grid [A1] ──┐                                                 │
-                                                       ├──→ 9.5 history+filters ──→ 9.7 demo+clone test+release (OWNER)
-                       9.6 auth flag (deferrable) ────┘
+Gate 8 passed ──→ 9.1a scaffold ──→ 9.1b live feed (<1 s) ──→ 9.3 incidents+ack/escalate ──→ 9.4 detail+evidence [A2] ──┐
+                          │                                                                                             │
+                          └──→ 9.2 camera grid [A1] ──→ 9.5 history+filters ──→ 9.7 demo+clone test+release (OWNER)
 ```
 
 ### 9.1a — Scaffold + shell
@@ -94,11 +95,12 @@ Gate 8 passed ──→ 9.1a scaffold ──→ 9.1b live feed (<1 s) ──→ 
 |---|---|---|
 | History table over `GET /api/events` w/ cursor paging; filters (camera, type, severity, time range) round-tripped as API params, not client-side only | `dashboard/src/history/*` + tests | filter changes refetch with visible URL/paging state; paging walks cursors without skips/dupes |
 
-### 9.6 — Auth flag (optional; **deferrable — not a Gate-9 item**)
+### 9.6 — Auth flag — **DROPPED by owner decision 2026-08-30**
 
-| Do | Files | Done when |
-|---|---|---|
-| `AUTH_ENABLED` env (default off = single-user open mode locally); on → simple user/pass + viewer/operator/admin roles; audit logging regardless | `dashboard/src/auth/*`, backend middleware (8.4a surface) | both modes tested; README documents the flag. **Proposed: defer past v0.1.0 tag unless owner wants it in** |
+The dashboard runs open single-user mode (personal project). If anyone
+self-hosts seriously later, auth returns as a post-v0.1.0 backlog item;
+audit logging of dashboard actions is unaffected (backend-side, always
+on).
 
 ### 9.7 — Demo + clone test + release *(OWNER)*
 
@@ -120,7 +122,7 @@ Gate 8 passed ──→ 9.1a scaffold ──→ 9.1b live feed (<1 s) ──→ 
 | Evidence serving | A2 route; `EVIDENCE_ROOT` default = edge evidence output dir (exact path confirmed at 9.4); traversal-sandboxed | demo-first; fleet upload = Phase 10+ (documented) |
 | Demo feed | replay tool over the 8.5 publish harness; compose `demo` profile | clone test needs no GPUs/models/downloads |
 | Frontend testing | vitest + @testing-library/react (unit, no stack); Playwright e2e **gated on stack reachability** (skip-with-instructions — the edge/Gate-8 pattern) | CI stays green without Docker; e2e proves the gates |
-| Auth 9.6 | off by default; **recommend deferring past v0.1.0** | optional in runbook + locked plan; not a Gate-9 criterion |
+| Auth | none — dropped by owner decision (open single-user mode) | personal project; audit logging is backend-side and always on |
 
 ## Risks
 
@@ -133,9 +135,11 @@ Gate 8 passed ──→ 9.1a scaffold ──→ 9.1b live feed (<1 s) ──→ 
 | Clone test rot (the release blocker) | demo replay profile exercised in CI-optional job / pre-release checklist, not just once |
 | Scope creep (video wall, fleet maps, pretty charts) | locked-plan screens only; everything else → backlog |
 
-## Open questions — resolve at approval
+## Resolved at approval (2026-08-30, owner)
 
-1. **Auth 9.6: build now or defer past v0.1.0?** (recommend defer)
-2. **Occupancy thresholds** — approve or edit the four cut points.
-3. **Analytics in PG too?** (recommend Redis-only for v0.1.0 — A1 as written)
-4. **Demo replay tool as compose profile** — approve (recommend) or live-edge-only demo?
+| # | Question | Decision |
+|---|---|---|
+| 1 | Auth 9.6 | **Dropped entirely** — open single-user mode; post-v0.1.0 backlog if ever |
+| 2 | Occupancy thresholds | **Approved** — `<0.60` Normal · `<0.85` Moderate · `≤1.0` Crowded · `>1.0` Overcrowded |
+| 3 | Analytics in PG too? | **No — Redis live-state only** (A1 as written) |
+| 4 | Demo replay tool | **Yes** — compose `demo` profile; the Gate-9 clone test runs on it |
