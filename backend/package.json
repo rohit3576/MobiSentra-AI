@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@confluentinc/kafka-javascript": "^1.10.0",
-    "ajv": "^8.17.1"
+    "ajv": "^8.17.1",
+    "ioredis": "^6.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
