@@ -5,7 +5,7 @@ import { io } from "socket.io-client";
 import type { Socket } from "socket.io-client";
 import { createPushServer, vehicleRoom } from "../src/ws/push.js";
 import type { EventPusher, PushHandle } from "../src/ws/push.js";
-import type { EventRecord } from "../src/lib/events.js";
+import type { CameraState, EventRecord } from "../src/lib/events.js";
 
 /**
  * Real socket.io server + client over an ephemeral localhost port —
@@ -97,6 +97,12 @@ function nextEvent(socket: Socket): Promise<EventRecord> {
   });
 }
 
+function nextState(socket: Socket): Promise<CameraState> {
+  return new Promise((resolve) => {
+    socket.once("state", (payload: CameraState) => resolve(payload));
+  });
+}
+
 describe("vehicleRoom", () => {
   it("is the runbook room shape", () => {
     expect(vehicleRoom("BUS_102")).toBe("alerts:BUS_102");
@@ -155,6 +161,34 @@ describe("createPushServer", () => {
     const first = nextEvent(client);
     pusher.publish("BUS_2", record("e2", "BUS_2"));
     await expect(first).resolves.toStrictEqual(record("e2", "BUS_2"));
+  });
+
+  it("camera state reaches only its vehicle's clients, on the state channel (A1)", async () => {
+    const { pusher, url } = await startServer();
+    const busOne = await connectClient(url);
+    const busTwo = await connectClient(url);
+    await expect(subscribe(busOne, "BUS_1")).resolves.toBe(true);
+    await expect(subscribe(busTwo, "BUS_2")).resolves.toBe(true);
+
+    const eventChannelLeaks: string[] = [];
+    busOne.on("event", () => eventChannelLeaks.push("BUS_1"));
+    busTwo.on("event", () => eventChannelLeaks.push("BUS_2"));
+
+    const stateOf = (cameraId: string): CameraState => ({
+      cameraId,
+      zone: "cabin",
+      level: "MODERATE",
+      peopleCount: 14,
+      ratio: 0.74,
+      ts: "2026-08-30T09:00:05Z",
+    });
+    const stateOnOne = nextState(busOne);
+    const stateOnTwo = nextState(busTwo);
+    pusher.publishState("BUS_1", stateOf("BUS_1_CAM_1"));
+    pusher.publishState("BUS_2", stateOf("BUS_2_CAM_1"));
+    await expect(stateOnOne).resolves.toStrictEqual(stateOf("BUS_1_CAM_1"));
+    await expect(stateOnTwo).resolves.toStrictEqual(stateOf("BUS_2_CAM_1"));
+    expect(eventChannelLeaks).toEqual([]); // state never rides the event channel
   });
 
   it("logs connections (operator visibility)", async () => {

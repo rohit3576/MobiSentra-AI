@@ -57,3 +57,10 @@ const eventValidator: ValidateFunction = ajv.compile(loadSchema("event"));
 export function validateEventData(data: unknown): ValidationResult {
   return toResult(eventValidator(data), eventValidator.errors);
 }
+
+const analyticsValidator: ValidateFunction = ajv.compile(loadSchema("analytics"));
+
+/** Validate an `org.mobisentra.analytics.*` `data` payload against schema v0 (A1). */
+export function validateAnalyticsData(data: unknown): ValidationResult {
+  return toResult(analyticsValidator(data), analyticsValidator.errors);
+}

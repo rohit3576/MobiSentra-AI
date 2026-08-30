@@ -14,11 +14,12 @@
  */
 import type { Server as HttpServer } from "node:http";
 import { Server } from "socket.io";
-import type { EventRecord } from "../lib/events.js";
+import type { CameraState, EventRecord } from "../lib/events.js";
 
 /** What the 8.3b pipeline depends on — Socket.IO never leaks past this. */
 export interface EventPusher {
   publish(vehicleId: string, event: EventRecord): void;
+  publishState(vehicleId: string, state: CameraState): void;
 }
 
 export interface PushServerOptions {
@@ -37,6 +38,10 @@ export function vehicleRoom(vehicleId: string): string {
   return `alerts:${vehicleId}`;
 }
 
+export function cameraStateRoom(vehicleId: string): string {
+  return `cameras:${vehicleId}`;
+}
+
 export function createPushServer(httpServer: HttpServer, options: PushServerOptions = {}): PushHandle {
   const io = new Server(httpServer, {
     path: options.path ?? "/socket.io",
@@ -50,8 +55,11 @@ export function createPushServer(httpServer: HttpServer, options: PushServerOpti
         ack?.(false);
         return;
       }
+      // one subscribe, both channels: a vehicle watcher wants its alerts
+      // AND its camera occupancy state (A1)
       socket.join(vehicleRoom(vehicleId));
-      console.log(`[ws] ${socket.id} subscribed ${vehicleRoom(vehicleId)}`);
+      socket.join(cameraStateRoom(vehicleId));
+      console.log(`[ws] ${socket.id} subscribed ${vehicleRoom(vehicleId)} + ${cameraStateRoom(vehicleId)}`);
       ack?.(true);
     });
     socket.on("disconnect", (reason) => {
@@ -63,6 +71,9 @@ export function createPushServer(httpServer: HttpServer, options: PushServerOpti
     pusher: {
       publish: (vehicleId, event) => {
         io.to(vehicleRoom(vehicleId)).emit("event", event);
+      },
+      publishState: (vehicleId, state) => {
+        io.to(cameraStateRoom(vehicleId)).emit("state", state);
       },
     },
     close: () => io.close(),

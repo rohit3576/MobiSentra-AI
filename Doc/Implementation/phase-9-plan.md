@@ -140,6 +140,6 @@ on).
 | # | Question | Decision |
 |---|---|---|
 | 1 | Auth 9.6 | **Dropped entirely** — open single-user mode; post-v0.1.0 backlog if ever |
-| 2 | Occupancy thresholds | **Approved** — `<0.60` Normal · `<0.85` Moderate · `≤1.0` Crowded · `>1.0` Overcrowded |
+| 2 | Occupancy thresholds | Approved as proposed — **superseded by 8.3b grounding (2026-08-30): the badge displays the edge-computed `level`** (`NORMAL/MODERATE/CROWDED/OVERCROWDED` is an enum in the shared analytics schema; edge cut points 0.70/0.90/1.00 in `edge/.../occupancy.py`). The dashboard never re-derives bands from ratio; re-cutting thresholds is an edge-config change, not a dashboard one |
 | 3 | Analytics in PG too? | **No — Redis live-state only** (A1 as written) |
 | 4 | Demo replay tool | **Yes** — compose `demo` profile; the Gate-9 clone test runs on it |
