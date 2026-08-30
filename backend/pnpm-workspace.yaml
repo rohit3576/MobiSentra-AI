@@ -1,2 +1,3 @@
 allowBuilds:
+  '@confluentinc/kafka-javascript': true
   esbuild: true

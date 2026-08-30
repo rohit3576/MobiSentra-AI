@@ -1,7 +1,8 @@
 # Phase 8 — Backend Services · Plan
 
-> **Status: DRAFT — awaiting owner approval (per-phase working agreement:
-> plan first → approve → execute steps one-by-one, each verifiable).**
+> **Status: APPROVED 2026-08-29 (owner: "lets start the plan … small small
+> divide"; execution began at 8.1b per owner directive — valid: 8.1a and
+> 8.1b are independent branches in the dependency map).**
 > Source of truth: `implementation-sequence.md` Phase 8 (on conflict, the
 > runbook + `implementation-plan.md` §2 win).
 > **No owner-input steps** — dev creds are the compose defaults; the stack
@@ -68,11 +69,11 @@ Proposed execution order: **8.1a → 8.1b → 8.2 → 8.3a → 8.3c → 8.3b →
 |---|---|---|
 | `lib/events.ts`: schema-valid envelope → typed `EventRecord` (id, source, vehicle_id + camera_id parsed from `/mobisentra/edge/{v}/{c}`, event_type, severity, timestamp, tracks, location, evidence_ref, model_versions, raw JSON); reject invalid with structured errors (reuse `schema/events.ts` validators) | `backend/src/lib/events.ts` + `test/events.test.ts` | unit: the shared-schema example + one envelope per kind round-trip; malformed envelope → structured rejection; source-parse failure → explicit fallback (vehicle `unknown`, camera from data) — never a crash |
 
-### 8.1b — Kafka consumer wrapper (injectable processor)
+### 8.1b — Kafka consumer wrapper (injectable processor) ✅ 2026-08-29 *(owner-directed first step)*
 
 | Do | Files | Done when |
 |---|---|---|
-| `consumer/kafka.ts`: kafka-javascript consumer, group `mobisentra-backend`, subscribe `mobisentra.events`, **manual offset commit only after the processor resolves** (at-least-once, restart-safe), batch drain with bounded concurrency, graceful SIGTERM (stop fetching → finish in-flight → commit → disconnect); processor injected | `backend/src/consumer/kafka.ts` + `test/kafka-consumer.test.ts` (fake consumer) | unit (fake): processor success → commit; processor failure → NO commit (redelivery); shutdown finishes in-flight then exits clean; runbook's "four topics" corrected to the one canonical topic (recorded) |
+| `consumer/kafka.ts`: kafka-javascript consumer, group `mobisentra-backend`, subscribe `mobisentra.events`, **manual offset commit only after the processor resolves** (at-least-once, restart-safe), batch drain with bounded concurrency, graceful SIGTERM (stop fetching → finish in-flight → commit → disconnect); processor injected | `backend/src/consumer/kafka.ts` + `test/kafka-consumer.test.ts` (fake driver) | ✅ **6/6 unit tests green + tsc clean** (backend suite 12/12 incl. the Phase-0 schema tests). `EventConsumer` over a minimal `ConsumerDriver` protocol (the edge-publisher Transport pattern): **commit only after the whole batch resolves** (ordering proven: `fetch→process×N→commit`); processor failure → `run()` rejects with **zero commits and no further fetches** (no silent skips — supervisor restarts with backoff, restart replays safely); commit failure → visible rejection; graceful stop → in-flight batch finishes + commits + driver closed; empty fetches → neither process nor commit. Sequential processing = bounded concurrency 1 (per-partition order preserved; concurrency knob deferred — recorded). **Live findings:** (1) pnpm 11 `allowBuilds` gating blocked the native addon → workspace file now allows `@confluentinc/kafka-javascript` (bridge already did), 4m47s build; (2) the real librdkafka `commit()` is **synchronous fire-and-forget** — errors surface via the `offset.commit` event (verified from the shipped `.d.ts`, not assumed) → driver routes that event into the transport-error path; commit sends per-partition max offset + 1 (resume-from semantics); (3) a fake driver returning instantly-resolving promises **starves the event loop in microtasks** and hangs the stop-timers — the fake yields via `setTimeout 0` (comment-documented; caught as a real hang, killed the orphaned vitest) |
 
 ### 8.2 — Redis dedupe (injectable client)
 
