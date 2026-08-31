@@ -37,7 +37,7 @@ Standing rules:
 | 5 | Altercation Detection | ≥ 85% fight clips; 0 alerts on 30 min normal footage | 🟡→❎ Executed 2026-08-28, **closed 2026-08-29 by owner decision (c) "accept documented limitation"** (Gate-4 FP-fork precedent): fight path built/wired/tested (235+4 suite), but Gate 5 numeric criteria unmet (UBI 11/40 full-length, 5/35 windowed vs ≥85%; negatives 22 alerts/42.4 min vs 0 — assist+crowd clean). Negative suite ✅ committed. Tuning deferred to Phase 10 data loop; windowed protocol (~5 min/run) reserved. Evidence in runs/*.json → [phase-5-completion.md](./phase-5-completion.md) |
 | 6 | Event Engine + Severity | golden-file tests pass | ✅ **PASSED 2026-08-29** — 6.1a–6.4 all ✅; Gate 6 ticked (4 reviewed goldens byte-exact + purity guard + all-outputs schema-valid incl. production smoke 55/55); suite 327+4, ruff clean; report: `phase-6-completion.md` |
 | 7 | Edge Messaging | 10-min blackout → zero loss, zero dupes | ✅ **PASSED 2026-08-29** — 7.1a–7.4b all ✅; Gate 7 ticked via 13-min soak (`runs/messaging-soak.json`, run 4ed37729: 10-min blackout, 144/144 zero-loss, dupes collapsed by id-dedupe, kafka kill/restore clean); suite 369+4 edge, 15/15 bridge; report: `phase-7-completion.md` |
-| 8 | Backend Services | restart-safe consumer; event < 1 s to dashboard | 🟡 In progress — 8.1a–8.3c ✅ + **8.4a ✅** (fastify REST: 6 endpoints + A2 evidence route w/ Range-206 + traversal sandbox; action+audit single txn; 18 new tests, backend 83/83 + tsc clean; live smoke incl. ack→audit row; live-caught PG 42P18 param-typing fixed); remaining 8.5 integration suite (Gate 8) → 8.4b compose |
+| 8 | Backend Services | restart-safe consumer; event < 1 s to dashboard | 🟡→✅ **Gate 8 PASSED 3/3 (2026-08-31)** — 8.1a–8.3c + 8.4a + **8.5 ✅** (integration suite: latency 23 ms, SIGKILL-mid-stream 150/150 zero-loss/zero-dup, ack/escalate audit rows, full-edge-path PASS; backend 87/87, gated skip proven; live-caught: kafka-javascript .d.ts lies on consume(cb) — single-message + timeout-errors; pnpm signal non-forwarding → process-group kills); remaining 8.4b compose service → phase-8-completion.md |
 | 9 | Dashboard | e2e demo < 2 s → **tag v0.1.0** | ☐ Not started |
 | 10 | MLOps + Edge (stretch) | registry-driven deploy; drift monitors live | ☐ Not started |
 
@@ -514,10 +514,10 @@ Standing rules:
 - **Files:** `backend/test/`.
 - **Done when:** restart mid-stream → no lost/duplicated PG rows.
 
-### GATE 8 — Backend
-- [ ] Consumer restart mid-stream: zero lost/duplicated rows
-- [ ] Dashboard receives an event < 1 s after edge publish
-- [ ] Ack/escalate write audit rows
+### GATE 8 — Backend — **PASSED 3/3 (2026-08-31, evidence in phase-8-plan.md 8.5)**
+- [x] Consumer restart mid-stream: zero lost/duplicated rows
+- [x] Dashboard receives an event < 1 s after edge publish (23 ms worst)
+- [x] Ack/escalate write audit rows
 
 ---
 

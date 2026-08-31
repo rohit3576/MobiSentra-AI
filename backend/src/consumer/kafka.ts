@@ -16,6 +16,8 @@
  */
 import { RdKafka } from "@confluentinc/kafka-javascript";
 
+const ERR__TIMED_OUT = -185; // librdkafka client code (lib/error.js table)
+
 export interface ConsumedMessage {
   topic: string;
   partition: number;
@@ -98,6 +100,15 @@ export interface LibrdkafkaDriverOptions {
 export class LibrdkafkaDriver implements ConsumerDriver {
   private readonly consumer: RdKafka.KafkaConsumer;
   private queue: ConsumedMessage[] = [];
+
+  private enqueue(message: RdKafka.Message): void {
+    this.queue.push({
+      topic: message.topic,
+      partition: message.partition,
+      offset: BigInt(message.offset),
+      value: message.value,
+    });
+  }
   private transportError: Error | null = null;
 
   private constructor(consumer: RdKafka.KafkaConsumer) {
@@ -110,6 +121,10 @@ export class LibrdkafkaDriver implements ConsumerDriver {
         "bootstrap.servers": options.broker,
         "group.id": options.groupId,
         "enable.auto.commit": false,
+        // failover in ~6 s instead of the 45 s default (broker floor is
+        // 6000; heartbeat must stay under session/3)
+        "session.timeout.ms": 6000,
+        "heartbeat.interval.ms": 2000,
       },
       { "auto.offset.reset": "earliest" }
     );
@@ -127,18 +142,25 @@ export class LibrdkafkaDriver implements ConsumerDriver {
             driver.transportError = new Error(`kafka commit failed: ${error.message}`);
           }
         });
+        // Live lesson (8.5): the callback-only consume() dispatches to the
+        // lib's flow-mode _consumeLoop, which (a) calls back per message with
+        // a SINGLE Message — the shipped .d.ts says Message[] and is wrong
+        // for this overload — and (b) forwards idle timeouts as errors
+        // (code -185), which are "nothing this round", not transport errors.
         consumer.consume((error, messages) => {
-          if (error) {
+          if (error !== null) {
+            if (error.code === ERR__TIMED_OUT || /timed out/i.test(error.message)) {
+              return;
+            }
             driver.transportError = new Error(`kafka consume failed: ${error.message}`);
             return;
           }
-          for (const message of messages) {
-            driver.queue.push({
-              topic: message.topic,
-              partition: message.partition,
-              offset: BigInt(message.offset),
-              value: message.value,
-            });
+          if (Array.isArray(messages)) {
+            for (const message of messages) {
+              driver.enqueue(message);
+            }
+          } else if (messages !== null && messages !== undefined) {
+            driver.enqueue(messages);
           }
         });
         resolve(driver);
