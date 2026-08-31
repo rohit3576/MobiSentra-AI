@@ -101,6 +101,31 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: mobisentra-backend
+    environment:
+      KAFKA_BROKER: kafka:29092          # INTERNAL listener — kafka:9092 advertises localhost
+      DATABASE_URL: postgres://mobisentra:mobisentra@postgres:5432/mobisentra
+      REDIS_URL: redis://redis:6379
+      HOST: 0.0.0.0
+      PORT: "3000"
+      EVIDENCE_ROOT: /data/evidence
+    ports:
+      - "3000:3000"    # REST + Socket.IO (one process, one port)
+    volumes:
+      - ../edge/runs/evidence:/data/evidence:ro   # edge evidence clips for /api/evidence (demo path)
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
   mediamtx:
     image: bluenviron/mediamtx:1.12.0
     container_name: mobisentra-mediamtx

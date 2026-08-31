@@ -1,0 +1,8 @@
+# Allowlist: the backend build context (repo root) needs ONLY these.
+# Everything else — edge/ with model weights, docs, dashboards, git —
+# must never reach the Docker daemon.
+*
+!backend
+!backend/**
+!schemas
+!schemas/**

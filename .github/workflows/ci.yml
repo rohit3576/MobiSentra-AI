@@ -59,3 +59,23 @@ jobs:
           cache-dependency-path: bridge/pnpm-lock.yaml
       - run: pnpm install --no-frozen-lockfile
       - run: pnpm typecheck
+
+  dashboard:
+    name: dashboard (node)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.23.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: dashboard/pnpm-lock.yaml
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test

@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Dark-ops base: near-black ground, neutral text, no white flash. */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: #09090b;
+  color: #d4d4d8;
+  -webkit-font-smoothing: antialiased;
+}

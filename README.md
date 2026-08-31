@@ -55,7 +55,8 @@ MobiSentra AI is an open-source computer-vision platform that adds an **AI intel
 | Person detection + tracking (YOLO26n + tuned BoT-SORT) | 🟡 Phase 2 built — gate decision pending |
 | Zones / fall / altercation | 🚧 Phases 3–5 |
 | Event engine + messaging | 🚧 Phases 6–7 |
-| Backend + dashboard | 🚧 Phases 8–9 → **v0.1.0** |
+| Backend services (Kafka consumer, REST, Socket.IO) | ✅ Phase 8 — Gate 8 passed |
+| Control center dashboard | 🚧 Phase 9 → **v0.1.0** |
 
 Full roadmap: [`Doc/Implementation/implementation-sequence.md`](Doc/Implementation/implementation-sequence.md)
 
@@ -76,6 +77,7 @@ This brings up the full development stack (no cameras needed):
 | PostgreSQL | 5432 | Event/incident history |
 | Redis | 6379 | Live state |
 | MLflow | 5000 | Model tracking |
+| Backend | 3000 | REST API + Socket.IO push (`docker compose up -d backend`) |
 
 The edge pipeline and dashboard arrive with the phase roadmap above — see the [implementation sequence](Doc/Implementation/implementation-sequence.md).
 
